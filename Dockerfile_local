@@ -1,0 +1,65 @@
+# VERSION: 0.1.0
+# OS BASE: Debian Slim
+# TYPE: Local (no SSH included)
+
+###################
+#~  OS AND APPS  ~#
+###################
+FROM debian:bookworm-slim
+
+WORKDIR /root/workspace
+ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13"
+
+# Install system apps, Python, and other tools using uv.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    sudo \
+    make \
+    bat \
+    git \
+    tmux \
+    libssl-dev \
+    ca-certificates \
+    ripgrep \
+    fzf \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy the .bashrc file and other config files
+COPY /to_copy_in/.bashrc /root/.bashrc
+COPY /to_copy_in/.tmux.conf /root/.tmux.conf
+COPY /to_copy_in/.profile /root/.profile
+COPY /to_copy_in/.gitconfig /root/.gitconfig
+COPY /to_copy_in/py_help /root/.py_help
+
+# root must take ownership of the copied files
+RUN chown -R root:root /root && \
+    chmod -R 755 /root
+
+#####################
+#~   UV / Python   ~#
+#####################
+
+# Install uv as brent
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    export PATH="$HOME/.local/bin:$PATH" && \
+    uv python install $PYTHON_VERSIONS
+
+RUN export PATH="$HOME/.local/bin:$PATH" && \
+    uv tool install black && \
+    uv tool install rust-just && \
+    uv tool install rich-cli && \
+    (cd /root/.py_help && uv sync)
+
+########################
+#~ METADATA & EXECUTE ~#
+########################
+LABEL maintainer="ed.jazzhands@gmail.com"
+LABEL version="0.1.0"
+LABEL description="Python tooling container with UV"
+LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/python-toolkit"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# This will keep the container running indefinitely in the background.
+# This is preferable for a toolbox container.
+CMD ["tail", "-f", "/dev/null"]

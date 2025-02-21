@@ -1,0 +1,121 @@
+# VERSION: 0.1.0
+# OS BASE: Debian Slim
+# TYPE: Local (no SSH included)
+
+###################
+#~  OS AND APPS  ~#
+###################
+FROM debian:bookworm-slim
+
+WORKDIR /workspace
+ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13"
+
+
+# Install system apps, Python, and other tools using uv.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    sudo \
+    make \
+    bat \
+    openssh-server \
+    git \
+    tmux \
+    gosu \
+    libssl-dev \
+    ca-certificates \
+    ripgrep \
+    fzf \
+    figlet \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+
+# Copy the .bashrc file and other config files
+COPY /to_copy_in/.bashrc /home/brent/.bashrc
+COPY /to_copy_in/.tmux.conf /home/brent/.tmux.conf
+COPY /to_copy_in/.profile /home/brent/.profile
+COPY /to_copy_in/.gitconfig /home/brent/.gitconfig
+COPY /to_copy_in/py_help /home/brent/.py_help
+COPY /to_copy_in/welcome.sh /home/brent/welcome.sh
+
+# 568:568 is the default for TrueNAS apps
+RUN groupadd -g 568 devuser && \
+    useradd -m -u 568 -g devuser -s /bin/bash devuser && \
+    chown -R 568:568 /workspace && \
+    chown -R 568:568 /home/devuser && \
+    chown -R 568:568 /home/devuser/.py_welcome && \
+    chown 568:568 /home/devuser/.bashrc && \
+    chown 568:568 /home/devuser/.tmux.conf && \
+    chown 568:568 /home/devuser/.profile && \
+    chown 1000:1000 /home/brent/.gitconfig && \
+    chown 568:568 /home/devuser/welcome.sh
+
+######################
+#~     SSH SETUP    ~#
+######################
+
+# Copy your sshd_config file to the system /etc/ssh folder (for server/OS level config):
+COPY sshd_config /etc/ssh/sshd_config
+
+# Copy the password file into the image
+COPY password /tmp/password
+
+# Copy your public key as the user authorized_keys file:
+# COPY id_rsa_devuser.pub /home/devuser/.ssh/authorized_keys
+
+RUN mkdir /run/sshd && \
+    # mkdir -p /home/devuser/.ssh && \
+    echo "devuser:$(cat /tmp/password)" | chpasswd && \
+    rm /tmp/password && \
+    # set permissions:
+    # 755: Owner can R+W+X, group and others can R+X
+    chmod 755 /run/sshd && \
+    # 700: Owner can R+W+X, group and others have no permissions
+    # chmod 700 /home/devuser/.ssh && \
+    chmod 700 /etc/ssh && \
+    # 600: Owner can R+W, group and others have no permissions
+    chmod 600 /etc/ssh/sshd_config && \
+    # chmod 600 /home/devuser/.ssh/authorized_keys && \
+    # set ownership:
+    chown root:root /etc/ssh/sshd_config && \
+    chown -R root:root /run/sshd
+    # chown -R 568:568 /home/devuser/.ssh && \
+    # chown -R 568:568 /home/devuser/.ssh/authorized_keys
+
+#####################
+#~   UV / Python   ~#
+#####################
+
+# Install uv as devuser
+RUN gosu devuser bash -c '\
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    export PATH="$HOME/.local/bin:$PATH" && \
+    uv python install $PYTHON_VERSIONS'
+
+# Install uv as devuser
+RUN gosu devuser bash -c '\
+    export PATH="$HOME/.local/bin:$PATH" && \
+    uv tool install black && \
+    uv tool install rust-just && \
+    uv tool install rich-cli && \
+    (cd ~/.py_welcome && uv sync)'
+
+
+########################
+#~ METADATA & EXECUTE ~#
+########################
+LABEL maintainer="ed.jazzhands@gmail.com"
+LABEL version="0.1.0"
+LABEL description="Python tooling container with UV and SSH support"
+LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/python-toolkit"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# This doesn't actually enable the port, it's only metadata for Docker.
+# The port is set in the sshd_config file.
+EXPOSE 2222
+
+# Mark as unhealthy if the SSH service goes down
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep sshd || exit 1
+
+ENTRYPOINT ["gosu", "root", "/usr/sbin/sshd", "-D"]

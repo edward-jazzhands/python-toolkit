@@ -1,0 +1,9 @@
+[project]
+name = "py-welcome"
+version = "0.1.0"
+description = "Welcome script for PTK"
+requires-python = ">=3.12"
+dependencies = [
+    "pyfiglet>=1.0.2",
+    "rich>=13.9.4",
+]
