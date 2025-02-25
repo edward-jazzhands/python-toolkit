@@ -1,17 +1,16 @@
 # VERSION: 0.1.0
 # OS BASE: Debian Slim
-# TYPE: Local (no SSH included)
+# TYPE: Remote (SSH included)
 
 ###################
 #~  OS AND APPS  ~#
 ###################
 FROM debian:bookworm-slim
 
-WORKDIR /workspace
+WORKDIR /home/devuser/workspace
 ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13"
 
-
-# Install system apps, Python, and other tools using uv.
+# Install system apps and other tools with apt-get
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     sudo \
@@ -25,40 +24,70 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     ripgrep \
     fzf \
-    figlet \
+    neovim \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 
 # Copy the .bashrc file and other config files
-COPY /to_copy_in/.bashrc /home/brent/.bashrc
-COPY /to_copy_in/.tmux.conf /home/brent/.tmux.conf
-COPY /to_copy_in/.profile /home/brent/.profile
-COPY /to_copy_in/.gitconfig /home/brent/.gitconfig
-COPY /to_copy_in/py_help /home/brent/.py_help
-COPY /to_copy_in/welcome.sh /home/brent/welcome.sh
+COPY /to_copy_in/.bashrc /home/devuser/.bashrc
+COPY /to_copy_in/.tmux.conf /home/devuser/.tmux.conf
+COPY /to_copy_in/.profile /home/devuser/.profile
+COPY /to_copy_in/.gitconfig /home/devuser/.gitconfig
+COPY /to_copy_in/py_help /home/devuser/.py_help
+COPY /to_copy_in/.launch.sh /home/devuser/.launch.sh
 
 # 568:568 is the default for TrueNAS apps
 RUN groupadd -g 568 devuser && \
     useradd -m -u 568 -g devuser -s /bin/bash devuser && \
-    chown -R 568:568 /workspace && \
-    chown -R 568:568 /home/devuser && \
-    chown -R 568:568 /home/devuser/.py_welcome && \
-    chown 568:568 /home/devuser/.bashrc && \
-    chown 568:568 /home/devuser/.tmux.conf && \
-    chown 568:568 /home/devuser/.profile && \
-    chown 1000:1000 /home/brent/.gitconfig && \
-    chown 568:568 /home/devuser/welcome.sh
+    chown -R 568:568 /home/devuser
+    
+
+#####################
+#~   UV / Python   ~#
+#####################
+
+# Install uv as devuser
+RUN gosu devuser bash -c '\
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    export PATH="$HOME/.local/bin:$PATH" && \
+    uv python install $PYTHON_VERSIONS'
+
+# Install uv as devuser
+RUN gosu devuser bash -c '\
+    export PATH="$HOME/.local/bin:$PATH" && \
+    uv tool install black && \
+    uv tool install rust-just && \
+    uv tool install rich-cli && \
+    uv tool install ducktools-pytui && \
+    uv tool install harlequin && \
+    (cd ~/.py_help && uv sync)'
+
+
+######################
+#~     NODE / JS    ~#
+######################
+
+# Download and install nvm and node:
+RUN gosu devuser bash -c '\
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
+    . "$HOME/.nvm/nvm.sh" && \
+    nvm install 22'
+
+RUN gosu devuser bash -c '\
+    . "$HOME/.nvm/nvm.sh" && \
+    npm install --global gulp-cli'
+
 
 ######################
 #~     SSH SETUP    ~#
 ######################
 
 # Copy your sshd_config file to the system /etc/ssh folder (for server/OS level config):
-COPY sshd_config /etc/ssh/sshd_config
+COPY /to_copy_in/sshd_config /etc/ssh/sshd_config
 
 # Copy the password file into the image
-COPY password /tmp/password
+COPY /to_copy_in/password /tmp/password
 
 # Copy your public key as the user authorized_keys file:
 # COPY id_rsa_devuser.pub /home/devuser/.ssh/authorized_keys
@@ -81,24 +110,6 @@ RUN mkdir /run/sshd && \
     chown -R root:root /run/sshd
     # chown -R 568:568 /home/devuser/.ssh && \
     # chown -R 568:568 /home/devuser/.ssh/authorized_keys
-
-#####################
-#~   UV / Python   ~#
-#####################
-
-# Install uv as devuser
-RUN gosu devuser bash -c '\
-    curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    export PATH="$HOME/.local/bin:$PATH" && \
-    uv python install $PYTHON_VERSIONS'
-
-# Install uv as devuser
-RUN gosu devuser bash -c '\
-    export PATH="$HOME/.local/bin:$PATH" && \
-    uv tool install black && \
-    uv tool install rust-just && \
-    uv tool install rich-cli && \
-    (cd ~/.py_welcome && uv sync)'
 
 
 ########################

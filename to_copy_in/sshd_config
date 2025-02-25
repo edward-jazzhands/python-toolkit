@@ -4,4 +4,4 @@ PasswordAuthentication yes
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
 LogLevel DEBUG3
-ForceCommand ~/welcome.sh
+ForceCommand ~/.launch.sh
