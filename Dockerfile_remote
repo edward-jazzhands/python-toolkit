@@ -14,6 +14,8 @@ ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13"
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     sudo \
+    wget \
+    tar \
     make \
     bat \
     openssh-server \
@@ -25,9 +27,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ripgrep \
     fzf \
     neovim \
+    libpng-dev \
+    build-essential \
+    zlib1g-dev \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
 
 # Copy the .bashrc file and other config files
 COPY /to_copy_in/.bashrc /home/devuser/.bashrc
@@ -42,7 +46,6 @@ RUN groupadd -g 568 devuser && \
     useradd -m -u 568 -g devuser -s /bin/bash devuser && \
     chown -R 568:568 /home/devuser
     
-
 #####################
 #~   UV / Python   ~#
 #####################
@@ -68,11 +71,18 @@ RUN gosu devuser bash -c '\
 #~     NODE / JS    ~#
 ######################
 
+# Set environment variables for NVM and Node
+ENV NVM_DIR=/home/devuser/.nvm
+ENV NODE_VERSION=22
+
 # Download and install nvm and node:
 RUN gosu devuser bash -c '\
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
     . "$HOME/.nvm/nvm.sh" && \
     nvm install 22'
+
+# Set npm and nvm paths
+ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"    
 
 RUN gosu devuser bash -c '\
     . "$HOME/.nvm/nvm.sh" && \
@@ -111,6 +121,39 @@ RUN mkdir /run/sshd && \
     # chown -R 568:568 /home/devuser/.ssh && \
     # chown -R 568:568 /home/devuser/.ssh/authorized_keys
 
+#######################
+#~   VS CODE STUFF   ~#
+#######################
+
+# Install VS Code Server
+#! Not in local version yet
+
+RUN gosu devuser bash -c '\
+    mkdir -p /home/devuser/local/share/code-server && \
+    wget -O /tmp/vscode-server.tar.gz https://update.code.visualstudio.com/latest/server-linux-x64/stable && \
+    tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1 && \
+    rm /tmp/vscode-server.tar.gz'
+
+# Install extensions
+RUN gosu devuser bash -c '\
+    /home/devuser/local/share/code-server/bin/code-server --install-extension ms-python.python \
+    --install-extension github.copilot \
+    --install-extension charliermarsh.ruff \
+    --install-extension davidanson.vscode-markdownlint \
+    --install-extension eamodio.gitlens \
+    --install-extension tamasfe.even-better-toml \
+    --install-extension szpro.ultimatehover \
+    --install-extension visualstudioexptteam.vscodeintellicode \
+    --install-extension ms-azuretools.vscode-docker'
+
+
+#######################
+#~    MISC CONFIG    ~#
+#######################
+
+# ENV PATH="/usr/sbin:${PATH}"
+
+# RUN echo "devuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 ########################
 #~ METADATA & EXECUTE ~#

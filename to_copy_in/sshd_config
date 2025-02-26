@@ -1,7 +1,7 @@
 Port 2222
-PermitRootLogin yes 
+PermitRootLogin no
 PasswordAuthentication yes
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
-LogLevel DEBUG3
+LogLevel INFO
 ForceCommand ~/.launch.sh
