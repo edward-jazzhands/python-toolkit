@@ -4,4 +4,5 @@ PasswordAuthentication yes
 PubkeyAuthentication yes
 AuthorizedKeysFile .ssh/authorized_keys
 LogLevel INFO
+AcceptEnv COLORTERM
 ForceCommand ~/.launch.sh

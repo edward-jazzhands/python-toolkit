@@ -1,6 +1,6 @@
-# VERSION: 0.1.0
+# VERSION: 0.2.0
 # OS BASE: Debian Slim
-# TYPE: Remote (SSH included)
+# TYPE: Remote / SSH
 
 ###################
 #~  OS AND APPS  ~#
@@ -8,7 +8,7 @@
 FROM debian:bookworm-slim
 
 WORKDIR /home/devuser/workspace
-ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13"
+ARG PYTHON_VERSIONS="3.8 3.9 3.10 3.11 3.12 3.13"
 
 # Install system apps and other tools with apt-get
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -26,10 +26,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     ripgrep \
     fzf \
-    neovim \
+    nano \
     libpng-dev \
     build-essential \
     zlib1g-dev \
+    ncurses-term \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -136,7 +137,8 @@ RUN gosu devuser bash -c '\
 
 # Install extensions
 RUN gosu devuser bash -c '\
-    /home/devuser/local/share/code-server/bin/code-server --install-extension ms-python.python \
+    /home/devuser/local/share/code-server/bin/code-server \
+    --install-extension ms-python.python \
     --install-extension github.copilot \
     --install-extension charliermarsh.ruff \
     --install-extension davidanson.vscode-markdownlint \
@@ -159,8 +161,8 @@ RUN gosu devuser bash -c '\
 #~ METADATA & EXECUTE ~#
 ########################
 LABEL maintainer="ed.jazzhands@gmail.com"
-LABEL version="0.1.0"
-LABEL description="Python tooling container with UV and SSH support"
+LABEL version="0.2.0"
+LABEL description="Edward Jazzhands Global Development Toolkit Container"
 LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/python-toolkit"
 LABEL org.opencontainers.image.licenses="MIT"
 
