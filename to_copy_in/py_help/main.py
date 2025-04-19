@@ -45,10 +45,10 @@ tools_table.add_row("ducktools-pytui", "pytui", "Python", "Experimental Python m
 tools_table.add_row("harlequin", "", "Python", "SQLite database viewer and editor")
 
 ###############
-# FZF TABLE #
+# FUNCTIONS TABLE #
 ###############
 
-fzf_table = Table(title="FZF shortcut functions")
+fzf_table = Table(title="Bash Functions")
 
 fzf_table.add_column("Command\n", style="cyan", no_wrap=True)
 fzf_table.add_column("Purpose", style="green")
@@ -57,6 +57,7 @@ fzf_table.add_row("fcd", "Fuzzy cd into a directory")
 fzf_table.add_row("fsh", "Fuzzy shell history")
 fzf_table.add_row("fnano", "Fuzzy nano into a file")
 fzf_table.add_row("fbat", "Fuzzy batcat into a file")
+fzf_table.add_row("colortest", "Print a 16-bit gradient to test truecolor support")
 
 ###################
 # WELCOME MESSAGE #
