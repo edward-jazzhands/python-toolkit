@@ -1,4 +1,3 @@
-# VERSION: 0.2.0
 # OS BASE: Debian Slim
 # TYPE: Remote / SSH
 
@@ -61,6 +60,8 @@ RUN gosu devuser bash -c '\
 RUN gosu devuser bash -c '\
     export PATH="$HOME/.local/bin:$PATH" && \
     uv tool install black && \
+    uv tool install mypy && \
+    uv tool install tox && \
     uv tool install rust-just && \
     uv tool install rich-cli && \
     uv tool install ducktools-pytui && \
@@ -135,6 +136,21 @@ RUN gosu devuser bash -c '\
     tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1 && \
     rm /tmp/vscode-server.tar.gz'
 
+# EXTENSIONS INTSALLED BELOW:
+# Microsoft Python
+# GitHub Copilot
+# Ruff
+# Markdown Lint
+# GitLens
+# Even Better TOML
+# Ultimate Hover
+# Visual Studio IntelliCode
+# Docker
+# Black formatter
+# YAML extension.
+# Textual syntax highlighting
+
+
 # Install extensions
 RUN gosu devuser bash -c '\
     /home/devuser/local/share/code-server/bin/code-server \
@@ -146,7 +162,10 @@ RUN gosu devuser bash -c '\
     --install-extension tamasfe.even-better-toml \
     --install-extension szpro.ultimatehover \
     --install-extension visualstudioexptteam.vscodeintellicode \
-    --install-extension ms-azuretools.vscode-docker'
+    --install-extension ms-azuretools.vscode-docker \
+    --install-extension ms-python.black-formatter \
+    --install-extension redhat.vscode-yaml \
+    --install-extension textualize.textual-syntax-highlighter'
 
 
 #######################
