@@ -1,10 +1,18 @@
 export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
+
+# UV by default uses symlinks for cache and virtual environments.
+# But this is inside a container, so we want to force it to copy
+# files instead of symlinking. That is what this variable does:
 export UV_LINK_MODE=copy
 
-# Add local bin to PATH (This is mostly used by uv, pipx, and other global tools)
-. "$HOME/.local/bin/env"
+# Poertry by default creates virtual environments in a special secret
+# cache location. We don't want that, we want it to create .venv folders
+# inside the project directory:
+export POETRY_VIRTUALENVS_IN_PROJECT=true
 
+# Add local bin env folder to PATH (This is used by uv)
+. "$HOME/.local/bin/env"
 
 alias proj="cd ~/workspace/vscode-projects"
 alias ls="ls -lFa --color=auto"
@@ -13,6 +21,10 @@ alias bat="batcat"
 echo "Type 'tkhelp' (Tool-Kit Help) to get started."
 
 # FUNCTIONS
+
+resource () {
+  source "$HOME/.bashrc"
+}
 
 tkhelp() {
     (cd ~/.py_help && uv run main.py)
@@ -55,3 +67,4 @@ colortest() {
       printf "\n";
   }'
 }
+

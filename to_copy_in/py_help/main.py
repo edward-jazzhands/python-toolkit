@@ -11,7 +11,6 @@ welcome_message = f"""{'=' * 30}
            by Edward Jazzhands
 
 OS Base: [cyan]Debian Slim[/cyan]
-Container Version: [cyan]0.1[/cyan]
 {'=' * 30}"""
 
 ###############
@@ -41,16 +40,14 @@ tools_table.add_row("nano", "", "C", "Terminal text editor")
 tools_table.add_row("batcat", "bat", "Rust", "Cat with color")
 tools_table.add_row("fzf", "", "Go", "Fuzzy finder")
 tools_table.add_row("ripgrep", "rg", "Rust", "Modern version of grep")
-tools_table.add_row("black", "", "Python", "Formatting")
-tools_table.add_row("mypy", "", "Python", "Type checking")
 tools_table.add_row("tox", "", "Python", "Tool / Environment orchestration")
 tools_table.add_row("rich-cli", "rich", "Python", "Syntax highlighting in terminal")
 tools_table.add_row("ducktools-pytui", "pytui", "Python", "Experimental Python managing TUI")
 tools_table.add_row("harlequin", "", "Python", "SQLite database viewer and editor")
 
-###############
+###################
 # FUNCTIONS TABLE #
-###############
+###################
 
 fzf_table = Table(title="Bash Functions")
 
