@@ -24,10 +24,11 @@ tools_table.add_column("Command\n", style="cyan", no_wrap=True)
 tools_table.add_column("Written in", style="magenta", no_wrap=True)
 tools_table.add_column("Purpose", style="green")
 
-tools_table.add_row("gosu", "", "Go/Shell", "Modern replacement for sudo")
+tools_table.add_row("sudo", "", "C", "Run commands as another user")
 tools_table.add_row("git", "", "C", "Version Control")
 tools_table.add_row("curl", "", "C", "Downloading things")
 tools_table.add_row("wget", "", "C", "Downloading things")
+tools_table.add_row("homebrew", "brew", "Ruby", "Package manager")
 tools_table.add_row("uv", "", "Rust", "Manages all things python")
 tools_table.add_row("npm", "", "Javascript", "Node Package Manager")
 tools_table.add_row("nvm", "", "Shell", "Node Version Manager for Javascript")
@@ -44,6 +45,7 @@ tools_table.add_row("tox", "", "Python", "Tool / Environment orchestration")
 tools_table.add_row("rich-cli", "rich", "Python", "Syntax highlighting in terminal")
 tools_table.add_row("ducktools-pytui", "pytui", "Python", "Experimental Python managing TUI")
 tools_table.add_row("harlequin", "", "Python", "SQLite database viewer and editor")
+tools_table.add_row("lazygit", "", "Go", "Terminal UI for git")
 
 ###################
 # FUNCTIONS TABLE #
@@ -58,7 +60,10 @@ fzf_table.add_row("fcd", "Fuzzy cd into a directory")
 fzf_table.add_row("fsh", "Fuzzy shell history")
 fzf_table.add_row("fnano", "Fuzzy nano into a file")
 fzf_table.add_row("fbat", "Fuzzy batcat into a file")
+fzf_table.add_row("rgf", "Ripgrep by filename")
 fzf_table.add_row("colortest", "Print a 16-bit gradient to test truecolor support")
+fzf_table.add_row("resource", "Re-source the .bashrc file")
+fzf_table.add_row("tkhelp", "Display this help message")
 
 ###################
 # WELCOME MESSAGE #
@@ -69,4 +74,4 @@ console.print(welcome_message)
 console.print(tools_table)
 console.print("[italic]Command is same as name if blank[/italic] \n")
 console.print(fzf_table)
-console.print("\nType [cyan]tkhelp[/cyan] (Tool-Kit help) to display this message again.\n")
+console.print("\n[italic]Remember to 'tmux a'[/italic] \n")

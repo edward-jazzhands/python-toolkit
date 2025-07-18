@@ -84,42 +84,25 @@ RUN mkdir /run/sshd && \
 ################################
 
 # --- Homebrew Installation ---
-RUN gosu devuser /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
+RUN gosu devuser bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/devuser/.bashrc
 
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
-#########################
-#~   OLD UV / Python   ~#
-#########################
+# Install Homebrew packages
+RUN gosu devuser brew install \
+    cloc \
+    lazygit
 
-# # Install uv as devuser
-# RUN gosu devuser bash -c '\
-#     curl -LsSf https://astral.sh/uv/install.sh | sh && \
-#     export PATH="$HOME/.local/bin:$PATH" && \
-#     uv python install $PYTHON_VERSIONS'
+###################
+# ~ UV / Python ~ #
+###################
 
-# # Install uv tools as devuser
-# RUN gosu devuser bash -c '\
-#     export PATH="$HOME/.local/bin:$PATH" && \
-#     uv tool install tox && \
-#     uv tool install rust-just && \
-#     uv tool install rich-cli && \
-#     uv tool install ducktools-pytui && \
-#     uv tool install harlequin && \
-#     (cd ~/.py_help && uv sync)'
-
-
-#####################
-#~ NEW UV / Python ~#
-#####################
-
-RUN gosu devuser bash -c '\
-    curl -LsSf https://astral.sh/uv/install.sh | sh'
+RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
 
 ENV PATH="/home/devuser/.local/bin:${PATH}"
 
-RUN gosu devuser bash -c 'uv python install $PYTHON_VERSIONS' && \
+RUN gosu devuser uv python install $PYTHON_VERSIONS && \
     gosu devuser uv tool install poetry && \
     gosu devuser uv tool install tox && \
     gosu devuser uv tool install rust-just && \
@@ -131,30 +114,9 @@ RUN gosu devuser bash -c 'uv python install $PYTHON_VERSIONS' && \
     # logical unit. While `SHELL` instruction handles the outer `RUN`,
     # nested shell logic often benefits from explicit `bash -c`.
 
-    
-######################
-#~  OLD NODE / JS   ~#
-######################
-
-# # Set environment variables for NVM and Node
-# ENV NVM_DIR=/home/devuser/.nvm
-# ENV NODE_VERSION=22
-
-# # Download and install nvm and node:
-# RUN gosu devuser bash -c '\
-#     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
-#     . "$HOME/.nvm/nvm.sh" && \
-#     nvm install 22'
-
-# ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
-
-# RUN gosu devuser bash -c '\
-#     . "$HOME/.nvm/nvm.sh" && \
-#     npm install --global gulp-cli'
-
-######################
-#~   NEW NODE / JS  ~#
-######################
+###################
+#~    NODE / JS  ~#
+###################
 
 # Set environment variables for NVM and Node
 ENV NVM_DIR=/home/devuser/.nvm
@@ -181,25 +143,12 @@ RUN gosu devuser bash -c '\
 #~   VS CODE STUFF   ~#
 #######################
 
-# Install VS Code Server
-#! Not in local version yet
-
-# OLD
-# RUN gosu devuser bash -c '\
-#     mkdir -p /home/devuser/local/share/code-server && \
-#     wget -O /tmp/vscode-server.tar.gz https://update.code.visualstudio.com/latest/server-linux-x64/stable && \
-#     tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1 && \
-#     rm /tmp/vscode-server.tar.gz'
-
-# NEW
 RUN gosu devuser mkdir -p /home/devuser/local/share/code-server
 RUN gosu devuser wget -O /tmp/vscode-server.tar.gz https://update.code.visualstudio.com/latest/server-linux-x64/stable && \
     gosu devuser tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1 && \
     gosu devuser rm /tmp/vscode-server.tar.gz
 
-
 # EXTENSIONS INTSALLED BELOW:
-# Microsoft Python
 # GitHub Copilot
 # Ruff
 # Black formatter
@@ -213,24 +162,6 @@ RUN gosu devuser wget -O /tmp/vscode-server.tar.gz https://update.code.visualstu
 # Textual syntax highlighting
 # Justfile support extension
 
-
-# OLD Install extensions
-# RUN gosu devuser bash -c '\
-#     /home/devuser/local/share/code-server/bin/code-server \
-#     --install-extension ms-python.python \
-#     --install-extension github.copilot \
-#     --install-extension charliermarsh.ruff \
-#     --install-extension ms-python.black-formatter \
-#     --install-extension davidanson.vscode-markdownlint \
-#     --install-extension eamodio.gitlens \
-#     --install-extension tamasfe.even-better-toml \
-#     --install-extension szpro.ultimatehover \
-#     --install-extension visualstudioexptteam.vscodeintellicode \
-#     --install-extension ms-azuretools.vscode-docker \
-#     --install-extension redhat.vscode-yaml \
-#     --install-extension textualize.textual-syntax-highlighter \
-#     --install-extension kokakiwi.vscode-just'
-
 # NEW Install extensions
 RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
     --install-extension ms-python.python \
@@ -239,22 +170,18 @@ RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
     --install-extension ms-python.black-formatter \
     --install-extension davidanson.vscode-markdownlint \
     --install-extension eamodio.gitlens \
-    --install-extension tamasfe.even-better-toml \
     --install-extension szpro.ultimatehover \
+    --install-extension mguellsegarra.highlight-on-copy \
     --install-extension visualstudioexptteam.vscodeintellicode \
     --install-extension ms-azuretools.vscode-docker \
+    # YAML support
     --install-extension redhat.vscode-yaml \
+    # TOML support
+    --install-extension tamasfe.even-better-toml \
+    # TCSS (Textual) suport
     --install-extension textualize.textual-syntax-highlighter \
+    # Justfile support
     --install-extension kokakiwi.vscode-just
-
-
-#######################
-#~    MISC CONFIG    ~#
-#######################
-
-# ENV PATH="/usr/sbin:${PATH}"
-
-# RUN echo "devuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 ########################
 #~ METADATA & EXECUTE ~#
