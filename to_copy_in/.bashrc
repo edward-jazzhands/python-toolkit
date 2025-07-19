@@ -17,6 +17,7 @@ export POETRY_VIRTUALENVS_IN_PROJECT=true
 alias proj="cd ~/workspace/vscode-projects"
 alias ls="ls -lFa --color=auto"
 alias bat="batcat"
+alias cl="clear"
 
 echo "Type 'tkhelp' (Tool-Kit Help) to get started."
 

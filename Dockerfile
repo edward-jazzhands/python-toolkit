@@ -24,21 +24,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ripgrep \
     fzf \
     nano \
-    figlet \
-    toilet \
     libpng-dev \
     build-essential \
     zlib1g-dev \
     ncurses-term \
+    # figlet/toilet are only here because I'm a contributor to PyFiglet.
+    figlet \
+    toilet \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the .bashrc file and other config files
-COPY /to_copy_in/.bashrc /home/devuser/.bashrc
-COPY /to_copy_in/.tmux.conf /home/devuser/.tmux.conf
-COPY /to_copy_in/.profile /home/devuser/.profile
-COPY /to_copy_in/.gitconfig /home/devuser/.gitconfig
 COPY /to_copy_in/py_help /home/devuser/.py_help
+COPY /to_copy_in/.bashrc /home/devuser/.bashrc
+COPY /to_copy_in/.profile /home/devuser/.profile
+COPY /to_copy_in/.tmux.conf /home/devuser/.tmux.conf
+COPY /to_copy_in/.gitconfig /home/devuser/.gitconfig
 COPY /to_copy_in/.launch.sh /home/devuser/.launch.sh
 
 # 568:568 is the default for TrueNAS apps
@@ -59,6 +60,11 @@ COPY /to_copy_in/password /tmp/password
 
 # Copy your public key as the user authorized_keys file:
 # COPY id_rsa_devuser.pub /home/devuser/.ssh/authorized_keys
+
+# NOTE: These unfinished comments are for future reference to get
+# it working with SSH keys instead of passwords.
+# I found it quite tricky to get it working properly, so I left
+# it as a password for now.
 
 RUN mkdir /run/sshd && \
     # mkdir -p /home/devuser/.ssh && \
@@ -109,10 +115,13 @@ RUN gosu devuser uv python install $PYTHON_VERSIONS && \
     gosu devuser uv tool install rich-cli && \
     gosu devuser uv tool install ducktools-pytui && \
     gosu devuser uv tool install harlequin && \
+    gosu devuser uv tool install textual-dev && \
     gosu devuser bash -c '(cd ~/.py_help && uv sync)'
     # The last command needs `bash -c` because it involves `cd` and `&&` within the same
     # logical unit. While `SHELL` instruction handles the outer `RUN`,
     # nested shell logic often benefits from explicit `bash -c`.
+    # I honestly cannot claim to understand it. But some of these commands just
+    # refuse to work without it, and I don't fully comprehend why. ¯\_(ツ)_/¯
 
 ###################
 #~    NODE / JS  ~#
@@ -148,21 +157,7 @@ RUN gosu devuser wget -O /tmp/vscode-server.tar.gz https://update.code.visualstu
     gosu devuser tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1 && \
     gosu devuser rm /tmp/vscode-server.tar.gz
 
-# EXTENSIONS INTSALLED BELOW:
-# GitHub Copilot
-# Ruff
-# Black formatter
-# Markdown Lint
-# GitLens
-# Even Better TOML
-# Ultimate Hover
-# Visual Studio IntelliCode
-# Docker
-# YAML extension
-# Textual syntax highlighting
-# Justfile support extension
-
-# NEW Install extensions
+# Install extensions
 RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
     --install-extension ms-python.python \
     --install-extension github.copilot \
