@@ -11,6 +11,13 @@ export UV_LINK_MODE=copy
 # inside the project directory:
 export POETRY_VIRTUALENVS_IN_PROJECT=true
 
+# This is because some apps such as git credential manager expect a program called
+# 'libicu' to be available in the system to handle internationalization
+# (ie. characters from other languages).
+# This program is fairly large and is not needed in a container.
+# This will make it ignore the error and continue running.
+export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
 # Add local bin env folder to PATH (This is used by uv)
 . "$HOME/.local/bin/env"
 

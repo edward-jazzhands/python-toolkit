@@ -98,7 +98,8 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}
 # Install Homebrew packages
 RUN gosu devuser brew install \
     cloc \
-    lazygit
+    lazygit \
+    gnupg
 
 ###################
 # ~ UV / Python ~ #
@@ -116,6 +117,7 @@ RUN gosu devuser uv python install $PYTHON_VERSIONS && \
     gosu devuser uv tool install ducktools-pytui && \
     gosu devuser uv tool install harlequin && \
     gosu devuser uv tool install textual-dev && \
+    gosu devuser uv tool install cloctui && \
     gosu devuser bash -c '(cd ~/.py_help && uv sync)'
     # The last command needs `bash -c` because it involves `cd` and `&&` within the same
     # logical unit. While `SHELL` instruction handles the outer `RUN`,

@@ -29,6 +29,7 @@ tools_table.add_row("git", "", "C", "Version Control")
 tools_table.add_row("curl", "", "C", "Downloading things")
 tools_table.add_row("wget", "", "C", "Downloading things")
 tools_table.add_row("homebrew", "brew", "Ruby", "Package manager")
+tools_table.add_row("GNU Pass", "pass", "C", "Password manager")
 tools_table.add_row("uv", "", "Rust", "Manages all things python")
 tools_table.add_row("npm", "", "Javascript", "Node Package Manager")
 tools_table.add_row("nvm", "", "Shell", "Node Version Manager for Javascript")
@@ -46,6 +47,7 @@ tools_table.add_row("rich-cli", "rich", "Python", "Syntax highlighting in termin
 tools_table.add_row("ducktools-pytui", "pytui", "Python", "Experimental Python managing TUI")
 tools_table.add_row("harlequin", "", "Python", "SQLite database viewer and editor")
 tools_table.add_row("lazygit", "", "Go", "Terminal UI for git")
+tools_table.add_row("cloctui", "", "Python/Perl", "Terminal UI for CLOC")
 
 ###################
 # FUNCTIONS TABLE #
