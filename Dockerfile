@@ -111,7 +111,7 @@ ENV PATH="/home/devuser/.local/bin:${PATH}"
 
 RUN gosu devuser uv python install $PYTHON_VERSIONS && \
     gosu devuser uv tool install poetry && \
-    gosu devuser uv tool install tox && \
+    gosu devuser uv tool install nox && \
     gosu devuser uv tool install rust-just && \
     gosu devuser uv tool install rich-cli && \
     gosu devuser uv tool install ducktools-pytui && \
