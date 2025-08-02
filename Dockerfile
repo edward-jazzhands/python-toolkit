@@ -40,6 +40,7 @@ COPY /to_copy_in/.bashrc /home/devuser/.bashrc
 COPY /to_copy_in/.profile /home/devuser/.profile
 COPY /to_copy_in/.tmux.conf /home/devuser/.tmux.conf
 COPY /to_copy_in/.gitconfig /home/devuser/.gitconfig
+COPY /to_copy_in/.gitignore_global /home/devuser/.gitignore_global
 COPY /to_copy_in/.launch.sh /home/devuser/.launch.sh
 
 # 568:568 is the default for TrueNAS apps
@@ -179,6 +180,13 @@ RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
     --install-extension textualize.textual-syntax-highlighter \
     # Justfile support
     --install-extension kokakiwi.vscode-just
+
+
+###################
+#~      GIT      ~#
+###################
+
+RUN gosu devuser git config --global core.excludesfile ~/.gitignore_global 
 
 ########################
 #~ METADATA & EXECUTE ~#
