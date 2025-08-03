@@ -39,6 +39,7 @@ COPY /to_copy_in/py_help /home/devuser/.py_help
 COPY /to_copy_in/.bashrc /home/devuser/.bashrc
 COPY /to_copy_in/.profile /home/devuser/.profile
 COPY /to_copy_in/.tmux.conf /home/devuser/.tmux.conf
+COPY /to_copy_in/.justfile /home/devuser/.justfile
 COPY /to_copy_in/.gitconfig /home/devuser/.gitconfig
 COPY /to_copy_in/.gitignore_global /home/devuser/.gitignore_global
 COPY /to_copy_in/.launch.sh /home/devuser/.launch.sh

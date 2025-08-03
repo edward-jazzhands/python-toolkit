@@ -21,7 +21,7 @@ export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 # Add local bin env folder to PATH (This is used by uv)
 . "$HOME/.local/bin/env"
 
-export proj="$HOME/workspace/vscode-projects"
+export projects="$HOME/workspace/vscode-projects"
 alias proj="cd ~/workspace/vscode-projects"
 alias ls="ls -lFa --color=auto"
 alias bat="batcat"
