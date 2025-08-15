@@ -1,44 +1,35 @@
-###################
-#~  OS AND APPS  ~#
-###################
+##############
+#~ METADATA ~#
+##############
 
 FROM debian:bookworm-slim
 SHELL ["/bin/bash", "-c"]
 ARG PYTHON_VERSIONS="3.8 3.9 3.10 3.11 3.12 3.13"
 
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+LABEL maintainer="ed.jazzhands@gmail.com"
+LABEL version="0.3.0"
+LABEL description="Edward Jazzhands Global Development Toolkit Container"
+LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/python-toolkit"
+LABEL org.opencontainers.image.licenses="MIT"
+
+# This doesn't actually enable the port, it's only metadata for Docker.
+# The port is set in the sshd_config file.
+EXPOSE 2222
+
+# Mark as unhealthy if the SSH service goes down
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep sshd || exit 1
+
+ENTRYPOINT ["gosu", "root", "/usr/sbin/sshd", "-D"]
+
+
 # WORKDIR is the default working directory for RUN, CMD,
 # ENTRYPOINT, COPY, and ADD instructions. It is set here because?
 # ?????????
 WORKDIR /home/devuser/workspace
-
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    sudo \
-    wget \
-    tar \
-    make \
-    bat \
-    openssh-server \
-    git \
-    tmux \
-    gosu \
-    gnupg \
-    libssl-dev \
-    ca-certificates \
-    ripgrep \
-    fzf \
-    nano \
-    neovim \
-    libpng-dev \
-    build-essential \
-    zlib1g-dev \
-    ncurses-term \
-    # figlet/toilet are only here because I'm a contributor to PyFiglet.
-    figlet \
-    toilet \
-    && apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
 # Copy the .bashrc file and other config files
 COPY /to_copy_in/py_help /home/devuser/.py_help
@@ -55,33 +46,22 @@ RUN groupadd -g 568 devuser && \
     useradd -m -u 568 -g devuser -s /bin/bash devuser && \
     chown -R 568:568 /home/devuser && \
     echo 'devuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-
-
-###################
-#~      GIT      ~#
-###################
-
-RUN 
-
-# GNUPGHOME is the directory where GnuPG stores its configuration and keyrings.
-# This allows for storing the GPG keys in the data storage of the container/
-# server that gets bind mounted into the container, so we can reuse the keys
-# across container restarts and updates.
-ENV GNUPGHOME=/home/devuser/workspace/.gnupg
-
-# Make sure the folder exists with correct permissions
-RUN mkdir -p "$GNUPGHOME" \
-    && chown -R devuser:devuser "$GNUPGHOME" \
-    && chmod 700 "$GNUPGHOME"
-
-# Install Git Credential Manager and configure it for the devuser as well as
-# any global Git settings.
-RUN gosu devuser bash -c "curl -L https://aka.ms/gcm/linux-install-source.sh | bash -s -- --yes"
-RUN gosu devuser git-credential-manager configure && \
-    gosu devuser git config --global core.excludesfile ~/.gitignore_global && \
-    gosu devuser git config --global credential.credentialStore gpg
-
+ 
+# Base programs required for setting up other things
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
+    curl \
+    ca-certificates \
+    sudo \
+    wget \
+    tar \
+    git \
+    gosu \
+    # libssl-dev is a library for OpenSSL, which is required by many Python packages.
+    libssl-dev \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
     
 
 ######################
@@ -121,9 +101,9 @@ RUN mkdir /run/sshd && \
     # chown -R 568:568 /home/devuser/.ssh && \
     # chown -R 568:568 /home/devuser/.ssh/authorized_keys
 
-################################
-# ~ GENERIC PACKAGE MANAGERS ~ #
-################################
+######################
+# ~ Homebrew Setup ~ #
+######################
 
 # --- Homebrew Installation ---
 RUN gosu devuser bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -131,34 +111,29 @@ RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/devus
 
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
-RUN gosu devuser brew install \
-    cloc \
-    lazygit \
-    gopass
+#########################
+# ~ UV / Python Setup ~ #
+#########################
 
-###################
-# ~ UV / Python ~ #
-###################
+RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' && \
+    gosu devuser bash -c 'export PATH="/home/devuser/.local/bin:${PATH}" && \
+    uv python install $PYTHON_VERSIONS'
 
-RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
-
+# RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
 ENV PATH="/home/devuser/.local/bin:${PATH}"
+# RUN gosu devuser bash -c 'PATH="/home/devuser/.local/bin:${PATH}" uv python install $PYTHON_VERSIONS'
 
-RUN gosu devuser uv python install $PYTHON_VERSIONS && \
-    gosu devuser uv tool install poetry && \
-    gosu devuser uv tool install nox && \
-    gosu devuser uv tool install rust-just && \
-    gosu devuser uv tool install rich-cli && \
-    gosu devuser uv tool install ducktools-pytui && \
-    gosu devuser uv tool install harlequin && \
-    gosu devuser uv tool install textual-dev && \
-    gosu devuser uv tool install cloctui && \
-    gosu devuser bash -c '(cd ~/.py_help && uv sync)'
-    # The last command needs `bash -c` because it involves `cd` and `&&` within the same
-    # logical unit. While `SHELL` instruction handles the outer `RUN`,
-    # nested shell logic often benefits from explicit `bash -c`.
-    # I honestly cannot claim to understand it. But some of these commands just
-    # refuse to work without it, and I don't fully comprehend why. ¯\_(ツ)_/¯
+######################
+#~   Golang Setp   ~#
+######################
+
+RUN apt-get update && apt-get install -y wget tar && \
+    wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz && \
+    rm go1.25.0.linux-amd64.tar.gz && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+ENV PATH=$PATH:/usr/local/go/bin
 
 ###################
 #~    NODE / JS  ~#
@@ -174,7 +149,77 @@ RUN gosu devuser bash -c '\
     . "$NVM_DIR/nvm.sh" && \
     nvm install "$NODE_VERSION"'
 
-ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"    
+ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"     
+
+#######################
+#~   VS CODE Setup   ~#
+#######################
+
+RUN gosu devuser mkdir -p /home/devuser/local/share/code-server
+RUN gosu devuser wget -O /tmp/vscode-server.tar.gz https://update.code.visualstudio.com/latest/server-linux-x64/stable && \
+    gosu devuser tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1 && \
+    gosu devuser rm /tmp/vscode-server.tar.gz
+
+###############
+# Debian Apps #
+###############
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    make \
+    bat \
+    openssh-server \
+    tmux \
+    gnupg \
+    ripgrep \
+    fzf \
+    nano \
+    neovim \
+    # libpng-dev is a library for PNG image support, required by ?
+    libpng-dev \
+    # build-essential is a package that includes the GCC compiler, make, and other tools
+    build-essential \
+    # zlib1g-dev is a library for compression, required by ?
+    zlib1g-dev \
+    ncurses-term \
+    # figlet/toilet are only here because I'm a contributor to PyFiglet.
+    figlet \
+    toilet \
+    hugo \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+#########################
+#~  PYTHON TOOLS SETUP ~#
+#########################
+
+RUN gosu devuser uv tool install poetry && \
+    gosu devuser uv tool install nox && \
+    gosu devuser uv tool install rust-just && \
+    gosu devuser uv tool install rich-cli && \
+    gosu devuser uv tool install ducktools-pytui && \
+    gosu devuser uv tool install harlequin && \
+    gosu devuser uv tool install textual-dev && \
+    gosu devuser uv tool install cloctui && \
+    gosu devuser bash -c '(cd ~/.py_help && uv sync)'
+    # The last command needs `bash -c` because it involves `cd` and `&&` within the same
+    # logical unit. While `SHELL` instruction handles the outer `RUN`,
+    # nested shell logic often benefits from explicit `bash -c`.
+    # I honestly cannot claim to understand it. But some of these commands just
+    # refuse to work without it, and I don't fully comprehend why. ¯\_(ツ)_/¯
+
+#################
+# Homebrew Apps #
+#################
+
+RUN gosu devuser brew install \
+    cloc \
+    lazygit \
+    gopass
+
+
+#################
+# Node/NPM Apps #
+#################
 
 # Yes this has to be inside a quote block like this. It sucks.
 # Wish there was a better way to do this one.
@@ -184,31 +229,15 @@ RUN gosu devuser bash -c '\
     typescript \
     serve \
     blowfish-tools'
-
 # If you needed to use `nvm` functions (like `nvm use` or `nvm alias`) in *another* RUN command,
 # you would still need to source nvm.sh again for that specific RUN command's shell.
 # For example:
-# RUN . "$NVM_DIR/nvm.sh" && nvm use 18 # if you wanted to switch versions in a build step    
+# RUN . "$NVM_DIR/nvm.sh" && nvm use 18 # if you wanted to switch versions in a build step   
 
-#################
-# Website Tools #
-#################
+############################
+#~   VS CODE Extensions   ~#
+############################
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    hugo \
-    && apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-#######################
-#~   VS CODE STUFF   ~#
-#######################
-
-RUN gosu devuser mkdir -p /home/devuser/local/share/code-server
-RUN gosu devuser wget -O /tmp/vscode-server.tar.gz https://update.code.visualstudio.com/latest/server-linux-x64/stable && \
-    gosu devuser tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1 && \
-    gosu devuser rm /tmp/vscode-server.tar.gz
-
-# Install extensions
 RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
     --install-extension ms-python.python \
     --install-extension github.copilot \
@@ -227,21 +256,30 @@ RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
     # Justfile support
     --install-extension kokakiwi.vscode-just
 
-########################
-#~ METADATA & EXECUTE ~#
-########################
-LABEL maintainer="ed.jazzhands@gmail.com"
-LABEL version="0.3.0"
-LABEL description="Edward Jazzhands Global Development Toolkit Container"
-LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/python-toolkit"
-LABEL org.opencontainers.image.licenses="MIT"
+#####################
+#~   Golang Apps   ~#
+#####################
 
-# This doesn't actually enable the port, it's only metadata for Docker.
-# The port is set in the sshd_config file.
-EXPOSE 2222
+RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest
 
-# Mark as unhealthy if the SSH service goes down
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD pgrep sshd || exit 1
+##################
+#~  GIT CONFIG  ~#
+##################
 
-ENTRYPOINT ["gosu", "root", "/usr/sbin/sshd", "-D"]
+ENV GNUPGHOME=/home/devuser/.gnupg
+
+# Make sure the folder exists with correct permissions
+RUN mkdir -p "$GNUPGHOME" \
+    && chown -R devuser:devuser "$GNUPGHOME" \
+    # GnuPG requires the .gnupg directory to have 700 permissions
+    # 700 means only the owner can read, write, and execute
+    && chmod 700 "$GNUPGHOME"
+
+RUN gosu devuser git config --global core.excludesfile /home/devuser/.gitignore_global && \
+    gosu devuser git config --global credential.helper gopass
+
+###########    
+# CLEANUP #
+###########
+
+ENV DEBIAN_FRONTEND=dialog
