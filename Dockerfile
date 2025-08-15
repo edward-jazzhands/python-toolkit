@@ -134,6 +134,8 @@ RUN apt-get update && apt-get install -y wget tar && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 ENV PATH=$PATH:/usr/local/go/bin
+ENV PATH=$PATH:/home/devuser/go/bin
+
 
 ###################
 #~    NODE / JS  ~#
