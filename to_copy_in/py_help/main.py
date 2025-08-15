@@ -26,7 +26,6 @@ tools_table.add_column("Purpose", style="green")
 
 tools_table.add_row("sudo", "", "C", "Run commands as another user")
 tools_table.add_row("git", "", "C", "Version Control")
-tools_table.add_row("git credential manager", "gcm", "C#", "Git credential management")
 tools_table.add_row("GNU-PG", "gpg", "C", "Encryption and signing")
 tools_table.add_row("gopass", "", "Go", "Password manager using GPG")
 tools_table.add_row("curl", "", "C", "Downloading things")
