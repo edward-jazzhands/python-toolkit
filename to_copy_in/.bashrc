@@ -1,3 +1,9 @@
+echo "Type 'tkhelp' (Tool-Kit Help) to get started."
+
+###########
+# EXPORTS #
+###########
+
 export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
 
@@ -22,12 +28,23 @@ export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 . "$HOME/.local/bin/env"
 
 export projects="$HOME/workspace/vscode-projects"
+
+
+###########
+# ALIASES #
+###########
+
 alias proj="cd ~/workspace/vscode-projects"
 alias ls="ls -lFa --color=auto"
 alias bat="batcat"
 alias cl="clear"
+alias gcm="git-credential-manager"
+alias resource="source ~/.bashrc"
+alias bashrc="nano ~/.bashrc"
 
-echo "Type 'tkhelp' (Tool-Kit Help) to get started."
+# Aliases for Python
+alias activate="source .venv/bin/activate"
+
 
 #############
 # FUNCTIONS #
@@ -39,11 +56,6 @@ echo "Type 'tkhelp' (Tool-Kit Help) to get started."
 # Run main launcher script for the python-toolkit
 tkhelp() {
     (cd ~/.py_help && uv run main.py)
-}
-
-# reload the .bashrc file
-resource () {
-  source "$HOME/.bashrc"
 }
 
 # Prints a color gradient to test truecolor support

@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     tmux \
     gosu \
+    gnupg \
     libssl-dev \
     ca-certificates \
     ripgrep \
@@ -100,8 +101,7 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}
 # Install Homebrew packages
 RUN gosu devuser brew install \
     cloc \
-    lazygit \
-    gnupg
+    lazygit
 
 ###################
 # ~ UV / Python ~ #
@@ -166,11 +166,9 @@ RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
     --install-extension ms-python.python \
     --install-extension github.copilot \
     --install-extension charliermarsh.ruff \
-    --install-extension ms-python.black-formatter \
     --install-extension davidanson.vscode-markdownlint \
     --install-extension eamodio.gitlens \
     --install-extension szpro.ultimatehover \
-    --install-extension mguellsegarra.highlight-on-copy \
     --install-extension visualstudioexptteam.vscodeintellicode \
     --install-extension ms-azuretools.vscode-docker \
     # YAML support
@@ -187,13 +185,14 @@ RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
 #~      GIT      ~#
 ###################
 
-RUN gosu devuser git config --global core.excludesfile ~/.gitignore_global 
+RUN gosu devuser git config --global core.excludesfile ~/.gitignore_global && \
+    gosu devuser git config --global credential.credentialStore gpg
 
 ########################
 #~ METADATA & EXECUTE ~#
 ########################
 LABEL maintainer="ed.jazzhands@gmail.com"
-LABEL version="0.2.0"
+LABEL version="0.3.0"
 LABEL description="Edward Jazzhands Global Development Toolkit Container"
 LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/python-toolkit"
 LABEL org.opencontainers.image.licenses="MIT"

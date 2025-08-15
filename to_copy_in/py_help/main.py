@@ -53,19 +53,20 @@ tools_table.add_row("cloctui", "", "Python/Perl", "Terminal UI for CLOC")
 # FUNCTIONS TABLE #
 ###################
 
-fzf_table = Table(title="Bash Functions")
+func_table = Table(title="Bash Functions")
 
-fzf_table.add_column("Command\n", style="cyan", no_wrap=True)
-fzf_table.add_column("Purpose", style="green")
+func_table.add_column("Command\n", style="cyan", no_wrap=True)
+func_table.add_column("Purpose", style="green")
 
-fzf_table.add_row("fcd", "Fuzzy cd into a directory")
-fzf_table.add_row("fsh", "Fuzzy shell history")
-fzf_table.add_row("fnano", "Fuzzy nano into a file")
-fzf_table.add_row("fbat", "Fuzzy batcat into a file")
-fzf_table.add_row("rgf", "Ripgrep by filename")
-fzf_table.add_row("colortest", "Print a 16-bit gradient to test truecolor support")
-fzf_table.add_row("resource", "Re-source the .bashrc file")
-fzf_table.add_row("tkhelp", "Display this help message")
+func_table.add_row("fcd", "Fuzzy cd into a directory")
+func_table.add_row("fsh", "Fuzzy shell history")
+func_table.add_row("fnano", "Fuzzy nano into a file")
+func_table.add_row("fbat", "Fuzzy batcat into a file")
+func_table.add_row("rgf", "Ripgrep by filename")
+func_table.add_row("colortest", "Print a 16-bit gradient to test truecolor support")
+func_table.add_row("resource", "Re-source the .bashrc file")
+func_table.add_row("activate", "Activate the Python virtual environment")
+func_table.add_row("tkhelp", "Display this help message")
 
 ###################
 # WELCOME MESSAGE #
@@ -75,5 +76,5 @@ console.print(f"\n[cyan]{banner}[/cyan]")
 console.print(welcome_message)
 console.print(tools_table)
 console.print("[italic]Command is same as name if blank[/italic] \n")
-console.print(fzf_table)
+console.print(func_table)
 console.print("\n[italic]Remember to 'tmux a'[/italic] \n")
