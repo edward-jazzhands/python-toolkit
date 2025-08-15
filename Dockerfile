@@ -57,6 +57,13 @@ RUN groupadd -g 568 devuser && \
     echo 'devuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 
+
+###################
+#~      GIT      ~#
+###################
+
+RUN 
+
 # GNUPGHOME is the directory where GnuPG stores its configuration and keyrings.
 # This allows for storing the GPG keys in the data storage of the container/
 # server that gets bind mounted into the container, so we can reuse the keys
@@ -67,6 +74,15 @@ ENV GNUPGHOME=/home/devuser/workspace/.gnupg
 RUN mkdir -p "$GNUPGHOME" \
     && chown -R devuser:devuser "$GNUPGHOME" \
     && chmod 700 "$GNUPGHOME"
+
+# Install Git Credential Manager and configure it for the devuser as well as
+# any global Git settings.
+RUN gosu devuser bash -c "curl -L https://aka.ms/gcm/linux-install-source.sh | bash -s -- --yes"
+RUN gosu devuser git-credential-manager configure && \
+    gosu devuser git config --global core.excludesfile ~/.gitignore_global && \
+    gosu devuser git config --global credential.credentialStore gpg
+
+    
 
 ######################
 #~     SSH SETUP    ~#
@@ -115,9 +131,7 @@ RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/devus
 
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
-# Install Homebrew packages
 RUN gosu devuser brew install \
-    --cask git-credential-manager \
     cloc \
     lazygit \
     gopass
@@ -162,23 +176,28 @@ RUN gosu devuser bash -c '\
 
 ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"    
 
-# RUN gosu devuser bash -c '\
-#     . "$NVM_DIR/nvm.sh" && \
-#     npm install --global gulp-cli'
-
-RUN gosu devuser bash -c '. "$NVM_DIR/nvm.sh"'
-
-RUN gosu devuser npm install --global \
-    gulp-cli \
+# Yes this has to be inside a quote block like this. It sucks.
+# Wish there was a better way to do this one.
+RUN gosu devuser bash -c '\
+    . "$NVM_DIR/nvm.sh" && \
+    npm install --global gulp-cli \
     typescript \
     serve \
-    hugo \
-    blowfish-tools
+    blowfish-tools'
 
 # If you needed to use `nvm` functions (like `nvm use` or `nvm alias`) in *another* RUN command,
 # you would still need to source nvm.sh again for that specific RUN command's shell.
 # For example:
 # RUN . "$NVM_DIR/nvm.sh" && nvm use 18 # if you wanted to switch versions in a build step    
+
+#################
+# Website Tools #
+#################
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    hugo \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 #######################
 #~   VS CODE STUFF   ~#
@@ -207,14 +226,6 @@ RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
     --install-extension textualize.textual-syntax-highlighter \
     # Justfile support
     --install-extension kokakiwi.vscode-just
-
-
-###################
-#~      GIT      ~#
-###################
-
-RUN gosu devuser git config --global core.excludesfile ~/.gitignore_global && \
-    gosu devuser git config --global credential.credentialStore gpg
 
 ########################
 #~ METADATA & EXECUTE ~#
