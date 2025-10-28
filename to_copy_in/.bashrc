@@ -28,7 +28,7 @@ export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 . "$HOME/.local/bin/env"
 
 export projects="$HOME/workspace/vscode-projects"
-
+export mygithub="https://github.com/edward-jazzhands"
 
 ###########
 # ALIASES #
@@ -85,18 +85,6 @@ fcd() {
 # fuzzy shell history
 fsh() {
   eval "$(history | fzf | sed 's/ *[0-9]* *//')"
-}
-
-# fuzzy nano
-fnano() {
-  local file
-  file=$(find . -type f -not -path '*/\.*' | fzf) && ${EDITOR:-nano} "$file"
-}
-
-# fuzzy batcat
-fbat() {
-  local file
-  file=$(find . -type f -not -path '*/\.*' | fzf) && bat "$file"
 }
 
 # ~ Ripgrep functions ~ #

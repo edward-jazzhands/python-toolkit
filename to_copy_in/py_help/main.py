@@ -33,6 +33,7 @@ tools_table.add_row("wget", "", "C", "Downloading things")
 tools_table.add_row("homebrew", "brew", "Ruby", "Package manager")
 tools_table.add_row("uv", "", "Rust", "Manages all things python")
 tools_table.add_row("npm", "", "Javascript", "Node Package Manager")
+tools_table.add_row("pnpm", "", "Javascript", "Performant Node Package Manager")
 tools_table.add_row("nvm", "", "Shell", "Node Version Manager for Javascript")
 tools_table.add_row("node", "", "C++", "Javascript runtime")
 tools_table.add_row("typescript", "tsc", "Javascript", "TypeScript compiler")
@@ -44,6 +45,7 @@ tools_table.add_row("gulp", "", "Javascript", "Command runner based on node")
 tools_table.add_row("nano", "", "C", "Terminal text editor")
 tools_table.add_row("neovim", "nvim", "C", "Terminal text editor with TUI")
 tools_table.add_row("batcat", "bat", "Rust", "Cat with color")
+tools_table.add_row("zoxide", "z", "Rust", "Smarter cd command")
 tools_table.add_row("fzf", "", "Go", "Fuzzy finder")
 tools_table.add_row("ripgrep", "rg", "Rust", "Modern version of grep")
 tools_table.add_row("nox", "", "Python", "Environment testing for Python")
@@ -53,8 +55,6 @@ tools_table.add_row("harlequin", "", "Python", "SQLite database viewer and edito
 tools_table.add_row("lazygit", "", "Go", "Terminal UI for git")
 tools_table.add_row("cloctui", "", "Python/Perl", "Terminal UI for CLOC")
 tools_table.add_row("hugo", "", "Go", "Static site generator")
-tools_table.add_row("blowfish-tools", "", "Javascript", "Blowfish Hugo theme tools")
-
 
 ###################
 # FUNCTIONS TABLE #
@@ -67,8 +67,6 @@ func_table.add_column("Purpose", style="green")
 
 func_table.add_row("fcd", "Fuzzy cd into a directory")
 func_table.add_row("fsh", "Fuzzy shell history")
-func_table.add_row("fnano", "Fuzzy nano into a file")
-func_table.add_row("fbat", "Fuzzy batcat into a file")
 func_table.add_row("rgf", "Ripgrep by filename")
 func_table.add_row("colortest", "Print a 16-bit gradient to test truecolor support")
 func_table.add_row("resource", "Re-source the .bashrc file")

@@ -3,15 +3,20 @@
 ##############
 
 FROM debian:bookworm-slim
+
+# SHELL command is necessary because it sets the default shell 
+# for RUN commands. Without it, Dockerfile uses /bin/sh, but we 
+# want bash features like source and proper script execution.
 SHELL ["/bin/bash", "-c"]
-ARG PYTHON_VERSIONS="3.8 3.9 3.10 3.11 3.12 3.13"
 
 # Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
 LABEL maintainer="ed.jazzhands@gmail.com"
 LABEL version="0.3.0"
-LABEL description="Edward Jazzhands Global Development Toolkit Container"
+LABEL description="Edward Jazzhands Development Toolkit Container"
+
+# NOTE: right now the repo is called python toolkit but that might change
 LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/python-toolkit"
 LABEL org.opencontainers.image.licenses="MIT"
 
@@ -19,42 +24,71 @@ LABEL org.opencontainers.image.licenses="MIT"
 # The port is set in the sshd_config file.
 EXPOSE 2222
 
+#########################
+#~   INITIAL CONFIG    ~#
+#########################
+
 # Mark as unhealthy if the SSH service goes down
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pgrep sshd || exit 1
 
+# the ENTRYPOINT sets the program that launches when the container starts up.
+# At the moment we only need the SSH Server. In the future this might be changed
+# to some kind of app manager/supervisor service to boot more than 1 program.
 ENTRYPOINT ["gosu", "root", "/usr/sbin/sshd", "-D"]
 
-
 # WORKDIR is the default working directory for RUN, CMD,
-# ENTRYPOINT, COPY, and ADD instructions. It is set here because?
-# ?????????
+# ENTRYPOINT, COPY, and ADD instructions. We don't care about the default directory
+# for RUN commands (We're just installing programs so it doesn't affect us).
+# Therefore it should actually be safe to delete the following line:
 WORKDIR /home/devuser/workspace
+# If this is deleted then plz test to ensure there's no problems.
 
-# Copy the .bashrc file and other config files
-COPY /to_copy_in/py_help /home/devuser/.py_help
+# Here we copy the .bashrc file and other config files.
+# This is where you would add in your own config files.
+# NOTE: This dockerfile is designed so that essential configs
+# for programs are not stored in any of these files. These are all
+# personal custom OS settings. I have my own favorite shell shortcuts
+# and functions, my tmux settings, my global Justfile, my own git settings, etc.
 COPY /to_copy_in/.bashrc /home/devuser/.bashrc
-COPY /to_copy_in/.profile /home/devuser/.profile
 COPY /to_copy_in/.tmux.conf /home/devuser/.tmux.conf
 COPY /to_copy_in/.justfile /home/devuser/.justfile
 COPY /to_copy_in/.gitconfig /home/devuser/.gitconfig
 COPY /to_copy_in/.gitignore_global /home/devuser/.gitignore_global
+
+# NOTE: These 3 files, unlike the config files above, are not optional.
+# The container is designed so that these are required.
+# .profile tells Debian slim to source the .bashrc file, its not included by
+# default in slim base images.
+# .launch.sh is utilized by SSH server (ForceCommand ~/.launch.sh)
+# to automatically start up bash for every user that connects through SSH
+# (Also not a default for some reason).
+# And .py_help is just the container's custom help splash. Its not *technically*
+# necessary but you'd have to modify .launch.sh to get rid of it.
+COPY /to_copy_in/.profile /home/devuser/.profile
+COPY /to_copy_in/py_help /home/devuser/.py_help
 COPY /to_copy_in/.launch.sh /home/devuser/.launch.sh
 
-# 568:568 is the default for TrueNAS apps
+# NOTE: 568:568 is the default for TrueNAS apps.
+# You may need to change the user/group ID for your server
 RUN groupadd -g 568 devuser && \
     useradd -m -u 568 -g devuser -s /bin/bash devuser && \
     chown -R 568:568 /home/devuser && \
+    chmod +x /home/devuser/.launch.sh && \
     echo 'devuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
  
-# Base programs required for setting up other things
+# Base programs required for setting up other programs
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    # --force-confdef = (Force configuration defaults)
+    # --force-confold = (Force configuration keep old files during upgrades)
+    # Together these two settings prevent any interactive prompts during
+    # package installation:
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
-    curl \
     ca-certificates \
     sudo \
     wget \
+    curl \
     tar \
     git \
     gosu \
@@ -109,19 +143,21 @@ RUN mkdir /run/sshd && \
 RUN gosu devuser bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/devuser/.bashrc
 
+# NOTE: setting ENV PATH= inside the dockerfile like this apparently also
+# sets it in the finished container? I think thats whats going on.
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 #########################
 # ~ UV / Python Setup ~ #
 #########################
 
+ARG PYTHON_VERSIONS="3.8 3.9 3.10 3.11 3.12 3.13"
+
 RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' && \
     gosu devuser bash -c 'export PATH="/home/devuser/.local/bin:${PATH}" && \
     uv python install $PYTHON_VERSIONS'
 
-# RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
 ENV PATH="/home/devuser/.local/bin:${PATH}"
-# RUN gosu devuser bash -c 'PATH="/home/devuser/.local/bin:${PATH}" uv python install $PYTHON_VERSIONS'
 
 ######################
 #~   Golang Setp   ~#
@@ -146,17 +182,28 @@ ENV NVM_DIR=/home/devuser/.nvm
 ENV NODE_VERSION=22
 
 # We source nvm here to ensure nvm install works in this single RUN command.
+# NOTE: I dont fully understand why the `. "$NVM_DIR/nvm.sh"` command seems to be necessary
+# every time you use nvm in the dockerfile. Wierd magics going on.
 RUN gosu devuser bash -c '\
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && \
     nvm install "$NODE_VERSION"'
 
-ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"     
+ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"    
+
+# Additionally install pnpm
+RUN gosu devuser bash -c '\
+    wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bashrc" SHELL="$(which bash)" bash -'
 
 #######################
 #~   VS CODE Setup   ~#
 #######################
 
+# NOTE: VS Code server is not set to always run in this container. It could, but
+# at the moment it is used to 1) pre-download VS Code extensions, and 2) Have
+# the VS Code server already installed when you go to Remote-SSH connect
+
+# This is apparently how you install VS Code server
 RUN gosu devuser mkdir -p /home/devuser/local/share/code-server
 RUN gosu devuser wget -O /tmp/vscode-server.tar.gz https://update.code.visualstudio.com/latest/server-linux-x64/stable && \
     gosu devuser tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1 && \
@@ -166,6 +213,7 @@ RUN gosu devuser wget -O /tmp/vscode-server.tar.gz https://update.code.visualstu
 # Debian Apps #
 ###############
 
+# Note: this is running as root instead of devuser
 RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     bat \
@@ -176,11 +224,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fzf \
     nano \
     neovim \
-    # libpng-dev is a library for PNG image support, required by ?
+    # libpng-dev is a library for PNG image support, commonly required by
+    # Python packages that work with images (ie. Pillow)
     libpng-dev \
     # build-essential is a package that includes the GCC compiler, make, and other tools
     build-essential \
-    # zlib1g-dev is a library for compression, required by ?
+    # zlib1g-dev is a library for compression, commonly required by
+    # Python packages that work with compression
     zlib1g-dev \
     ncurses-term \
     # figlet/toilet are only here because I'm a contributor to PyFiglet.
@@ -189,6 +239,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     hugo \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+###################
+#~  ZOXIDE SETUP ~#
+###################
+
+RUN gosu devuser bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh'
+RUN gosu devuser bash -c 'echo "eval \"$(zoxide init bash)\"" >> ~/.bashrc'
 
 #########################
 #~  PYTHON TOOLS SETUP ~#
@@ -219,43 +276,43 @@ RUN gosu devuser brew install \
     gopass
 
 
-#################
-# Node/NPM Apps #
-#################
+# #################
+# # Node/NPM Apps #
+# #################
 
-# Yes this has to be inside a quote block like this. It sucks.
-# Wish there was a better way to do this one.
-RUN gosu devuser bash -c '\
-    . "$NVM_DIR/nvm.sh" && \
-    npm install --global gulp-cli \
-    typescript \
-    serve \
-    blowfish-tools'
-# If you needed to use `nvm` functions (like `nvm use` or `nvm alias`) in *another* RUN command,
-# you would still need to source nvm.sh again for that specific RUN command's shell.
-# For example:
-# RUN . "$NVM_DIR/nvm.sh" && nvm use 18 # if you wanted to switch versions in a build step   
+# NOTE: This is commented out since its standard practice in modern
+# javascript to not bother installing any tools globally. All JS
+# tools should either be run directly with npx or installed locally per project.
+
+# RUN gosu devuser bash -c 'pnpm install --global \
+#     gulp-cli \
+#     serve \
+#     blowfish-tools'
 
 ############################
 #~   VS CODE Extensions   ~#
 ############################
 
 RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
+    --install-extension visualstudioexptteam.vscodeintellicode \
     --install-extension ms-python.python \
     --install-extension github.copilot \
-    --install-extension charliermarsh.ruff \
-    --install-extension davidanson.vscode-markdownlint \
     --install-extension eamodio.gitlens \
+    # Ruff for Python:
+    --install-extension charliermarsh.ruff \
+    # Markdown linter:
+    --install-extension davidanson.vscode-markdownlint \
+    # Ultimate Hover, improves hover pop-ups:
     --install-extension szpro.ultimatehover \
-    --install-extension visualstudioexptteam.vscodeintellicode \
+    # Docker support:
     --install-extension ms-azuretools.vscode-docker \
-    # YAML support
+    # YAML support:
     --install-extension redhat.vscode-yaml \
-    # TOML support
+    # TOML support:
     --install-extension tamasfe.even-better-toml \
-    # TCSS (Textual) suport
+    # TCSS (Textual for Python) suport:
     --install-extension textualize.textual-syntax-highlighter \
-    # Justfile support
+    # Justfile support:
     --install-extension kokakiwi.vscode-just
 
 #####################
