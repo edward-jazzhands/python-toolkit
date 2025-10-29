@@ -4,6 +4,8 @@ from pyfiglet import figlet_format
 
 console = Console()
 
+# Having this banner be dynamically generated means it'll adjust
+# to the terminal size and word wrap if necessary.
 banner = figlet_format("Python Toolkit", font="smslant")
 
 welcome_message = f"""{'=' * 30}
@@ -26,6 +28,7 @@ tools_table.add_column("Purpose", style="green")
 
 tools_table.add_row("sudo", "", "C", "Run commands as another user")
 tools_table.add_row("git", "", "C", "Version Control")
+tools_table.add_row("Github CLI", "gh", "Go", "Github official CLI")
 tools_table.add_row("GNU-PG", "gpg", "C", "Encryption and signing")
 tools_table.add_row("gopass", "", "Go", "Password manager using GPG")
 tools_table.add_row("curl", "", "C", "Downloading things")

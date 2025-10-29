@@ -37,12 +37,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # to some kind of app manager/supervisor service to boot more than 1 program.
 ENTRYPOINT ["gosu", "root", "/usr/sbin/sshd", "-D"]
 
-# WORKDIR is the default working directory for RUN, CMD,
-# ENTRYPOINT, COPY, and ADD instructions. We don't care about the default directory
-# for RUN commands (We're just installing programs so it doesn't affect us).
-# Therefore it should actually be safe to delete the following line:
-WORKDIR /home/devuser/workspace
-# If this is deleted then plz test to ensure there's no problems.
+# WORKDIR controls what folder you're dropped into if you docker exec
+# into the container. I almost never do that but its a small convenience.
+WORKDIR /home/devuser
 
 # Here we copy the .bashrc file and other config files.
 # This is where you would add in your own config files.
@@ -97,6 +94,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
     
+# Append 2 blank lines to the end of the .bashrc file for formatting
+RUN gosu devuser bash -c 'printf "\n\n" >> ~/.bashrc'
 
 ######################
 #~     SSH SETUP    ~#
@@ -142,6 +141,9 @@ RUN mkdir /run/sshd && \
 # --- Homebrew Installation ---
 RUN gosu devuser bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 RUN echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/devuser/.bashrc
+
+# Append 2 blank lines to the end of the .bashrc file for formatting
+RUN gosu devuser bash -c 'printf "\n\n" >> ~/.bashrc'
 
 # NOTE: setting ENV PATH= inside the dockerfile like this apparently also
 # sets it in the finished container? I think thats whats going on.
@@ -195,6 +197,9 @@ ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 RUN gosu devuser bash -c '\
     wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bashrc" SHELL="$(which bash)" bash -'
 
+    # Append 2 blank lines to the end of the .bashrc file for formatting
+RUN gosu devuser bash -c 'printf "\n\n" >> ~/.bashrc'
+
 #######################
 #~   VS CODE Setup   ~#
 #######################
@@ -245,7 +250,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ###################
 
 RUN gosu devuser bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh'
-RUN gosu devuser bash -c 'echo "eval \"$(zoxide init bash)\"" >> ~/.bashrc'
+RUN gosu devuser bash -c 'printf "%s\n" "eval \"\$(zoxide init bash)\"" >> ~/.bashrc'
+
+# Append 2 blank lines to the end of the .bashrc file for formatting
+RUN gosu devuser bash -c 'printf "\n\n" >> ~/.bashrc'
 
 #########################
 #~  PYTHON TOOLS SETUP ~#
@@ -260,11 +268,10 @@ RUN gosu devuser uv tool install poetry && \
     gosu devuser uv tool install textual-dev && \
     gosu devuser uv tool install cloctui && \
     gosu devuser bash -c '(cd ~/.py_help && uv sync)'
-    # The last command needs `bash -c` because it involves `cd` and `&&` within the same
-    # logical unit. While `SHELL` instruction handles the outer `RUN`,
-    # nested shell logic often benefits from explicit `bash -c`.
-    # I honestly cannot claim to understand it. But some of these commands just
-    # refuse to work without it, and I don't fully comprehend why. ¯\_(ツ)_/¯
+    # The last command needs `bash -c` because it involves `cd`
+    # and `&&` within the same logical unit. While `SHELL` instruction
+    # handles the outer `RUN`, nested shell logic often requires
+    # explicit `bash -c`.
 
 #################
 # Homebrew Apps #
@@ -336,6 +343,19 @@ RUN mkdir -p "$GNUPGHOME" \
 
 RUN gosu devuser git config --global core.excludesfile /home/devuser/.gitignore_global && \
     gosu devuser git config --global credential.helper gopass
+
+##################
+#~  GITHUB CLI  ~#
+##################
+
+RUN mkdir -p -m 755 /etc/apt/keyrings \
+	&& out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+	&& cat $out | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+	&& chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+	&& mkdir -p -m 755 /etc/apt/sources.list.d \
+	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+	&& apt update \
+	&& apt install gh -y
 
 ###########    
 # CLEANUP #
