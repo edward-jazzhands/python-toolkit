@@ -1,0 +1,45 @@
+FROM python:3.11-slim
+
+# Install s6-overlay
+ADD https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-noarch.tar.xz /tmp
+ADD https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-x86_64.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
+    tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+
+# Install SSH and dependencies
+RUN apt-get update && apt-get install -y openssh-server && \
+    mkdir /var/run/sshd && \
+    echo 'root:yourpassword' | chpasswd
+
+# Install Python dependencies
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
+
+# Copy your Flask app
+COPY . /app
+
+# Create s6 service definitions
+RUN mkdir -p /etc/s6-overlay/s6-rc.d/sshd/dependencies.d && \
+    mkdir -p /etc/s6-overlay/s6-rc.d/gunicorn/dependencies.d
+
+# SSH service
+RUN echo "longrun" > /etc/s6-overlay/s6-rc.d/sshd/type && \
+    echo "#!/command/execlineb -P" > /etc/s6-overlay/s6-rc.d/sshd/run && \
+    echo "/usr/sbin/sshd -D -e" >> /etc/s6-overlay/s6-rc.d/sshd/run && \
+    chmod +x /etc/s6-overlay/s6-rc.d/sshd/run
+
+# Gunicorn service
+RUN echo "longrun" > /etc/s6-overlay/s6-rc.d/gunicorn/type && \
+    echo "#!/command/execlineb -P" > /etc/s6-overlay/s6-rc.d/gunicorn/run && \
+    echo "cd /app" >> /etc/s6-overlay/s6-rc.d/gunicorn/run && \
+    echo "gunicorn -w 4 -b 0.0.0.0:8000 app:app" >> /etc/s6-overlay/s6-rc.d/gunicorn/run && \
+    chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run
+
+# Enable services in user bundle
+RUN touch /etc/s6-overlay/s6-rc.d/user/contents.d/sshd && \
+    touch /etc/s6-overlay/s6-rc.d/user/contents.d/gunicorn
+
+EXPOSE 22 8000
+
+ENTRYPOINT ["/init"]
