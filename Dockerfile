@@ -13,16 +13,16 @@ SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 
 LABEL maintainer="ed.jazzhands@gmail.com"
-LABEL version="0.3.0"
-LABEL description="Edward Jazzhands Development Toolkit Container"
+LABEL version="0.4.0"
+LABEL description="Edward Jazzhands Programming Toolkit Container"
 
-# NOTE: right now the repo is called python toolkit but that might change
-LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/python-toolkit"
+LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/programming-toolkit"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # This doesn't actually enable the port, it's only metadata for Docker.
 # The port is set in the sshd_config file.
-EXPOSE 2222
+#! Test what this actually does to ensure its needed
+EXPOSE 22 5000
 
 #########################
 #~   INITIAL CONFIG    ~#
@@ -32,10 +32,8 @@ EXPOSE 2222
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD pgrep sshd || exit 1
 
-# the ENTRYPOINT sets the program that launches when the container starts up.
-# At the moment we only need the SSH Server. In the future this might be changed
-# to some kind of app manager/supervisor service to boot more than 1 program.
-ENTRYPOINT ["gosu", "root", "/usr/sbin/sshd", "-D"]
+# This entrypoint launches S6-Overlay. It will create this file.
+ENTRYPOINT ["/init"]
 
 # WORKDIR controls what folder you're dropped into if you docker exec
 # into the container. I almost never do that but its a small convenience.
@@ -44,34 +42,29 @@ WORKDIR /home/devuser
 # Here we copy the .bashrc file and other config files.
 # This is where you would add in your own config files.
 # NOTE: This dockerfile is designed so that essential configs
-# for programs are not stored in any of these files. These are all
+# are not stored in any of these files. These are all
 # personal custom OS settings. I have my own favorite shell shortcuts
 # and functions, my tmux settings, my global Justfile, my own git settings, etc.
-COPY /to_copy_in/.bashrc /home/devuser/.bashrc
-COPY /to_copy_in/.tmux.conf /home/devuser/.tmux.conf
-COPY /to_copy_in/.justfile /home/devuser/.justfile
-COPY /to_copy_in/.gitconfig /home/devuser/.gitconfig
-COPY /to_copy_in/.gitignore_global /home/devuser/.gitignore_global
+#! Just ensure there's a .profile or .bash_profile file included!
+COPY /home-configs/ /home/devuser
 
-# NOTE: These 3 files, unlike the config files above, are not optional.
-# The container is designed so that these are required.
-# .profile tells Debian slim to source the .bashrc file, its not included by
-# default in slim base images.
-# .launch.sh is utilized by SSH server (ForceCommand ~/.launch.sh)
-# to automatically start up bash for every user that connects through SSH
-# (Also not a default for some reason).
-# And .py_help is just the container's custom help splash. Its not *technically*
-# necessary but you'd have to modify .launch.sh to get rid of it.
-COPY /to_copy_in/.profile /home/devuser/.profile
-COPY /to_copy_in/py_help /home/devuser/.py_help
-COPY /to_copy_in/.launch.sh /home/devuser/.launch.sh
+# ptk-help is the container's custom help splash. It is configured to
+# show on login in the .bash_profile file
+COPY /ptk-help /home/devuser/ptk-help
+
+# ptk-admin-panel
+COPY /ptk-admin-panel /home/devuser/ptk-admin-panel
 
 # NOTE: 568:568 is the default for TrueNAS apps.
 # You may need to change the user/group ID for your server
+# First add group 568 and name it devuser
 RUN groupadd -g 568 devuser && \
+    # Then add UID 568 named devuser. `-s /bin/bash devuser` -> default shell for devuser
     useradd -m -u 568 -g devuser -s /bin/bash devuser && \
+    # Set ownership of /devuser because we created it before the OS got a chance
+    # the -R flag makes it recursive (i think?)
     chown -R 568:568 /home/devuser && \
-    chmod +x /home/devuser/.launch.sh && \
+    # This line adds devuser to sudoers as NOPASSWD:
     echo 'devuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
  
 # Base programs required for setting up other programs
@@ -101,11 +94,10 @@ RUN gosu devuser bash -c 'printf "\n\n" >> ~/.bashrc'
 #~     SSH SETUP    ~#
 ######################
 
-# Copy your sshd_config file to the system /etc/ssh folder (for server/OS level config):
-COPY /to_copy_in/sshd_config /etc/ssh/sshd_config
+COPY sshd_config /etc/ssh/sshd_config
 
 # Copy the password file into the image
-COPY /to_copy_in/password /tmp/password
+COPY password /tmp/password
 
 # Copy your public key as the user authorized_keys file:
 # COPY id_rsa_devuser.pub /home/devuser/.ssh/authorized_keys
@@ -267,7 +259,8 @@ RUN gosu devuser uv tool install poetry && \
     gosu devuser uv tool install harlequin && \
     gosu devuser uv tool install textual-dev && \
     gosu devuser uv tool install cloctui && \
-    gosu devuser bash -c '(cd ~/.py_help && uv sync)'
+    gosu devuser bash -c '(cd ~/ptk-help && uv sync)'
+    gosu devuser bash -c '(cd ~/ptk-admin-panel && uv sync)'
     # The last command needs `bash -c` because it involves `cd`
     # and `&&` within the same logical unit. While `SHELL` instruction
     # handles the outer `RUN`, nested shell logic often requires
@@ -356,6 +349,22 @@ RUN mkdir -p -m 755 /etc/apt/keyrings \
 	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
 	&& apt update \
 	&& apt install gh -y
+
+
+##############    
+# S6-OVERLAY #
+##############
+
+
+# Install s6-overlay
+ADD https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-noarch.tar.xz /tmp
+ADD https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-overlay-x86_64.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
+    tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
+
+RUN chmod +x /etc/s6-overlay/s6-rc.d/sshd/run && \
+    chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run
+
 
 ###########    
 # CLEANUP #

@@ -1,3 +1,8 @@
+#! ATTENTION
+# The .bash_profile file (or just regular .profile) must be present
+# in order for .bashrc to be sourced upon user login to bash sessions.
+
+
 echo "Type 'tkhelp' (Tool-Kit Help) to get started."
 
 ###########

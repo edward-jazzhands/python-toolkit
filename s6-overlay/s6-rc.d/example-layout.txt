@@ -1,0 +1,13 @@
+s6-rc.d/
+├─ user/
+│  ├─ contends.d/
+│  │  ├─ gunicorn  (empty file)
+│  │  ├─ sshd  (empty file)
+├─ gunicorn/
+│  ├─ dependencies.d/  (empty dir)
+│  ├─ run
+│  ├─ type
+├─ sshd/
+│  ├─ dependencies.d/  (empty dir)
+│  ├─ run
+│  ├─ type

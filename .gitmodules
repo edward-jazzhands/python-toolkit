@@ -1,0 +1,3 @@
+[submodule "ptk-admin-panel"]
+	path = ptk-admin-panel
+	url = https://github.com/edward-jazzhands/ptk-admin-panel.git
