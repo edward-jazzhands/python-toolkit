@@ -259,7 +259,7 @@ RUN gosu devuser uv tool install poetry && \
     gosu devuser uv tool install harlequin && \
     gosu devuser uv tool install textual-dev && \
     gosu devuser uv tool install cloctui && \
-    gosu devuser bash -c '(cd ~/ptk-help && uv sync)'
+    gosu devuser bash -c '(cd ~/ptk-help && uv sync)' && \
     gosu devuser bash -c '(cd ~/ptk-admin-panel && uv sync)'
     # The last command needs `bash -c` because it involves `cd`
     # and `&&` within the same logical unit. While `SHELL` instruction
