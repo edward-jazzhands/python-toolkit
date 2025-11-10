@@ -16,6 +16,6 @@ if [ -f "$HOME/.bashrc" ]; then
 fi
 
 # run ptk-help
-cd ~/.ptk-help || exit 1
+cd ~/ptk-help
 uv run main.py
 cd ~
