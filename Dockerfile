@@ -362,6 +362,8 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v3.1.6.2/s6-
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
     tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz
 
+COPY /s6-overlay/s6-rc.d/ /etc/s6-overlay/s6-rc.d 
+
 RUN chmod +x /etc/s6-overlay/s6-rc.d/sshd/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run
 
