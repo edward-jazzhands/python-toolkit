@@ -6,10 +6,10 @@ console = Console()
 
 # Having this banner be dynamically generated means it'll adjust
 # to the terminal size and word wrap if necessary.
-banner = figlet_format("Python Toolkit", font="smslant")
+banner = figlet_format("Programming Toolkit", font="smslant")
 
 welcome_message = f"""{'=' * 30}
-[green]Python Toolkit Container[/green]
+[green]Programming Toolkit Container[/green]
            by Edward Jazzhands
 
 OS Base: [cyan]Debian Slim[/cyan]
@@ -43,10 +43,10 @@ tools_table.add_row("typescript", "tsc", "Javascript", "TypeScript compiler")
 tools_table.add_row("tmux", "", "C", "Screen multiplexer")
 tools_table.add_row("make", "", "C", "Build automation")
 tools_table.add_row("just", "", "Rust", "Command runner - replaces Make")
-tools_table.add_row("gulp", "", "Javascript", "Command runner based on node")
 tools_table.add_row("nano", "", "C", "Terminal text editor")
 tools_table.add_row("neovim", "nvim", "C", "Terminal text editor with TUI")
 tools_table.add_row("batcat", "bat", "Rust", "Cat with color")
+tools_table.add_row("btop", "", "C++", "System process viewer")
 tools_table.add_row("zoxide", "z", "Rust", "Smarter cd command")
 tools_table.add_row("fzf", "", "Go", "Fuzzy finder")
 tools_table.add_row("ripgrep", "rg", "Rust", "Modern version of grep")

@@ -3,7 +3,7 @@
 # in order for .bashrc to be sourced upon user login to bash sessions.
 
 
-echo "Type 'tkhelp' (Tool-Kit Help) to get started."
+echo "Type 'tkhelp' (Tool-Kit Help) to view all available programs."
 
 ###########
 # EXPORTS #
@@ -13,8 +13,10 @@ export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
 
 # UV by default uses symlinks for cache and virtual environments.
-# But this is inside a container, so we want to force it to copy
-# files instead of symlinking. That is what this variable does:
+# But this is inside a container where the projects are bind mounted.
+# This means the UV cache folder will be on a different file system than
+# the projects themselves. so we want to force it to copy files into each
+# venv instead of symlinking. That is what this variable does:
 export UV_LINK_MODE=copy
 
 # Poertry by default creates virtual environments in a special secret
@@ -39,7 +41,6 @@ export mygithub="https://github.com/edward-jazzhands"
 # ALIASES #
 ###########
 
-alias proj="cd ~/workspace/vscode-projects"
 alias ls="ls -lFa --color=auto"
 alias bat="batcat"
 alias cl="clear"
@@ -60,7 +61,7 @@ alias activate="source .venv/bin/activate"
 
 # Run main launcher script for the python-toolkit
 tkhelp() {
-    (cd ~/ptk_help && uv run main.py)
+    (cd ~/ptk-help && uv run main.py)
 }
 
 # Prints a color gradient to test truecolor support

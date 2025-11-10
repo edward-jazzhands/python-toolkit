@@ -221,6 +221,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fzf \
     nano \
     neovim \
+    btop \
     # libpng-dev is a library for PNG image support, commonly required by
     # Python packages that work with images (ie. Pillow)
     libpng-dev \
