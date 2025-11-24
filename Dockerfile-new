@@ -122,7 +122,7 @@ COPY /ptk-admin-panel /home/devuser/ptk-admin-panel
 RUN groupadd -g 568 devuser && \
     # -m forces creation of a home directory. If /home/devuser doesn’t exist, it gets created.
     # -u 568 forces the UID (user ID) to be 568. If omitted, it picks the next free UID.
-    # -g devuser sets the user’s primary group. This group must already exist (we created it earlier).
+    # -g devuser sets the user’s primary group. This group must already exist (we created it above).
     # -s /bin/bash sets the user’s login shell to /bin/bash:
     useradd -m -u 568 -g devuser -s /bin/bash devuser && \
     # -R means recursive. Note: this chown is possibly not necessary but is here anyway as a safety.
@@ -209,21 +209,30 @@ COPY --from=builder /home/devuser/local/share/code-server /home/devuser/local/sh
 COPY --from=builder /tmp/s6-overlay-noarch.tar.xz /tmp/s6-overlay-noarch.tar.xz
 COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 
-# Add the Go bin directory to the PATH
-ENV PATH="/usr/local/go/bin:/home/devuser/go/bin:${PATH}"
 
-# Homebrew setup + cleanup
-RUN gosu devuser bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
+######################
+# ~ Homebrew Setup ~ #
+######################
+
+# Create Homebrew directory with proper ownership
+RUN mkdir -p /home/linuxbrew && \
+    chown -R devuser:devuser /home/linuxbrew
+
+RUN gosu devuser bash -c "NONINTERACTIVE=1 $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
     printf "# Homebrew setup\n" >> /home/devuser/.bash_ext && \
     echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/devuser/.bash_ext && \
-    printf "\n\n" >> /home/devuser/.bash_ext
+    printf "\n\n" >> /home/devuser/.bash_ext && \
+    chown devuser:devuser /home/devuser/.bash_ext
 
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 
 RUN gosu devuser brew install cloc lazygit gopass && \
     gosu devuser brew cleanup -s --prune=0
 
-# UV/Python setup + cleanup
+#########################
+# ~ UV / Python Setup ~ #
+#########################
+
 ARG PYTHON_VERSIONS="3.9 3.10 3.11 3.12 3.13"
 
 RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' && \
@@ -244,7 +253,10 @@ RUN gosu devuser uv tool install poetry && \
     gosu devuser bash -c '(cd ~/ptk-admin-panel && uv sync)' && \
     gosu devuser uv cache clean
 
-# Node/NVM/PNPM setup + cleanup
+#################
+#~  NODE / JS  ~#
+#################
+
 ENV NVM_DIR=/home/devuser/.nvm
 ENV NODE_VERSION=22
 
@@ -259,11 +271,28 @@ RUN gosu devuser bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/
 
 ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 
-# Zoxide setup
+##########
+# Zoxide #
+##########
+
 RUN gosu devuser bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh' && \
     gosu devuser bash -c 'printf "%s\n" "eval \"\$(zoxide init bash)\"" >> ~/.bashrc' && \
     printf "\n\n" >> /home/devuser/.bashrc
 
+##########
+# Golang #
+##########
+
+# Add the Go bin directory to the PATH
+ENV PATH="/usr/local/go/bin:/home/devuser/go/bin:${PATH}"
+
+# Golang apps + optional mod cache cleanup (uncomment if mod cache not needed in image)
+RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest
+RUN gosu devuser go clean -modcache
+
+###########
+# VS Code #
+###########
 
 ## NOTE: Instead of downloading extensions into the container, it would be better
 ## to find where they are stored in the container and bind mount a volume to them.
@@ -284,11 +313,11 @@ RUN gosu devuser bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsou
 #     --install-extension textualize.textual-syntax-highlighter \
 #     --install-extension kokakiwi.vscode-just
 
-# Golang apps + optional mod cache cleanup (uncomment if mod cache not needed in image)
-RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest
-# RUN gosu devuser go clean -modcache  # Uncomment to save ~50-100MB if users won't use go install immediately
 
-# Git config (unchanged)
+#######
+# Git #
+#######
+
 ENV GNUPGHOME=/home/devuser/.gnupg
 
 RUN mkdir -p "$GNUPGHOME" && \
@@ -297,7 +326,10 @@ RUN mkdir -p "$GNUPGHOME" && \
     gosu devuser git config --global core.excludesfile /home/devuser/.gitignore_global && \
     gosu devuser git config --global credential.helper gopass
 
-# S6-overlay (extract from copied files + cleanup)
+##############
+# S6-Overlay #
+##############
+
 COPY /s6-overlay/s6-rc.d/ /etc/s6-overlay/s6-rc.d
 
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
@@ -309,7 +341,10 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/code-server/run
 
-# Reset to dialog for any interactive runtime use
+###########
+# Cleanup #
+###########
+
 ENV DEBIAN_FRONTEND=dialog
 
 
