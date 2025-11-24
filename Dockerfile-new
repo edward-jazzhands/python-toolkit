@@ -79,7 +79,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 # This does not actually enable the ports, it's only metadata for Docker.
 # Technically it's not even necessary for this to be here.
-EXPOSE 22 5000
+EXPOSE 22 5000 5001 5002
 
 # Healthcheck will check whether S6-Overlay is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -128,7 +128,7 @@ RUN groupadd -g 568 devuser && \
     # -R means recursive. Note: this chown is possibly not necessary but is here anyway as a safety.
     chown -R 568:568 /home/devuser && \
     # Add devuser to sudoers:
-    echo 'devuser ALL=(root) ALL' >> /etc/sudoers && \
+    echo 'devuser ALL=(root) ALL' >> /etc/sudoers
 
 ######################
 #~     SSH SETUP    ~#
@@ -303,9 +303,11 @@ COPY /s6-overlay/s6-rc.d/ /etc/s6-overlay/s6-rc.d
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
     tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz && \
     rm /tmp/s6-overlay*.tar.xz && \
+    # Remember to add new apps here as well:
+    chmod +x /etc/s6-overlay/s6-rc.d/init-script/up && \
     chmod +x /etc/s6-overlay/s6-rc.d/sshd/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run && \
-    chmod +x /etc/s6-overlay/s6-rc.d/init-script/up
+    chmod +x /etc/s6-overlay/s6-rc.d/code-server/run
 
 # Reset to dialog for any interactive runtime use
 ENV DEBIAN_FRONTEND=dialog
