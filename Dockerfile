@@ -1,3 +1,5 @@
+# This is the original unoptimized Dockerfile.
+
 ##############
 #~ METADATA ~#
 ##############
@@ -7,6 +9,8 @@ FROM debian:bookworm-slim
 # SHELL command is necessary because it sets the default shell 
 # for RUN commands. Without it, Dockerfile uses /bin/sh, but we 
 # want bash features like source and proper script execution.
+# This will ALSO set the default shell to be bash so that it starts
+# whenever a user logs in.
 SHELL ["/bin/bash", "-c"]
 
 # Set environment variables to avoid interactive prompts
@@ -70,9 +74,8 @@ RUN groupadd -g 568 devuser && \
 # Base programs required for setting up other programs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # --force-confdef = (Force configuration defaults)
-    # --force-confold = (Force configuration keep old files during upgrades)
-    # Together these two settings prevent any interactive prompts during
-    # package installation:
+    # --force-confold = (Force keep old files during upgrades)
+    # Together these two settings prevent any interactive prompts during package installation
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
     ca-certificates \
@@ -366,7 +369,8 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
 COPY /s6-overlay/s6-rc.d/ /etc/s6-overlay/s6-rc.d 
 
 RUN chmod +x /etc/s6-overlay/s6-rc.d/sshd/run && \
-    chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run
+    chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run && \
+    chmod +x /etc/s6-overlay/s6-rc.d/init-script/up
 
 
 ###########    
