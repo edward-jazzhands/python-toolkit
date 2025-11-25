@@ -2,11 +2,11 @@
 
 # Check if Docker secret exists
 if [ -f /run/secrets/devuser_password ]; then
-    PASSWORD=$(cat /run/secrets/devuser_password)
-    echo "devuser:$PASSWORD" | chpasswd
+    SECRET=$(cat /run/secrets/devuser_password)
+    echo "devuser:$SECRET" | chpasswd
 # Fall back to environment variable
-elif [ -n "$DEVUSER_PASSWORD" ]; then
-    echo "devuser:$DEVUSER_PASSWORD" | chpasswd
+elif [ -n "$PASSWORD" ]; then
+    echo "devuser:$PASSWORD" | chpasswd
 else
     echo "WARNING: No password set for devuser. SSH login will be unavailable."
 fi
