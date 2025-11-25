@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv bash
+#!/command/with-contenv bash
 
 # Check if Docker secret exists
 if [ -f /run/secrets/devuser_password ]; then
