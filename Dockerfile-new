@@ -263,10 +263,10 @@ ENV NODE_VERSION=22
 RUN gosu devuser bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && \
     nvm install "$NODE_VERSION" && \
-    nvm cache clear'
-RUN gosu devuser bash -c 'npm cache clean --force' && \
-    gosu devuser bash -c 'wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bashrc" SHELL="$(which bash)" bash -' && \
-    gosu devuser pnpm store prune && \
+    nvm cache clear && \
+    npm cache clean --force && \
+    wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bashrc" SHELL="$(which bash)" bash - && \
+    pnpm store prune' && \
     printf "\n\n" >> /home/devuser/.bashrc
 
 ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
