@@ -1,5 +1,7 @@
 #!/command/with-contenv bash
 
+echo "Running as: $0"
+
 # Check if Docker secret exists
 if [ -f /run/secrets/devuser_password ]; then
     SECRET=$(cat /run/secrets/devuser_password)
