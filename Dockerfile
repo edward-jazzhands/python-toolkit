@@ -339,6 +339,7 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
     rm /tmp/s6-overlay*.tar.xz && \
     # Remember to add new apps here as well:
     chmod +x /etc/s6-overlay/s6-rc.d/init-script/up && \
+    chmod +x /etc/s6-overlay/s6-rc.d/init-script/run.sh && \
     chmod +x /etc/s6-overlay/s6-rc.d/sshd/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/code-server/run
