@@ -152,8 +152,6 @@ RUN mkdir /run/sshd && \
 #~    APPS SETUP    ~#
 ######################
 
-# Coder.com Code-Server
-RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 # GitHub CLI setup (moved up for apt consolidation)
 RUN mkdir -p -m 755 /etc/apt/keyrings && \
@@ -170,7 +168,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     -o Dpkg::Options::="--force-confold" \
     ca-certificates \
     sudo \
-    wget \
     curl \
     tar \
     git \
@@ -209,6 +206,8 @@ COPY --from=builder /home/devuser/local/share/code-server /home/devuser/local/sh
 COPY --from=builder /tmp/s6-overlay-noarch.tar.xz /tmp/s6-overlay-noarch.tar.xz
 COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 
+# Coder.com Code-Server
+RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 ######################
 # ~ Homebrew Setup ~ #
