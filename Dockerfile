@@ -181,12 +181,14 @@ COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 
 # These folders are used by code-server to store its config and data
 # This will be bind mounted to the host at runtime to persist data.
+# NOTE: Other apps use the .config and .local/share folders so it is
+# important that these are owned by devuser.
 RUN mkdir -p /home/devuser/.config/code-server && \
     mkdir -p /home/devuser/.local/share/code-server && \
     chown -R devuser:devuser /home/devuser/.config/code-server && \
     chown -R devuser:devuser /home/devuser/.local/share/code-server
 
-RUN curl -fsSL https://code-server.dev/install.sh | sh
+RUN gosu devuser bash -c 'curl -fsSL https://code-server.dev/install.sh | sh'
 
 ######################
 # ~ Homebrew Setup ~ #
