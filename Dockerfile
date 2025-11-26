@@ -22,11 +22,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certifi
     wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz && \
     tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
 
-# Download VS Code server (only for remote-ssh)
-RUN wget -O /tmp/vscode-server.tar.gz https://update.code.visualstudio.com/latest/server-linux-x64/stable && \
-    mkdir -p /home/devuser/local/share/code-server && \
-    tar -xzf /tmp/vscode-server.tar.gz -C /home/devuser/local/share/code-server --strip-components=1
-
 # Download S6-overlay
 ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-noarch.tar.xz /tmp
 ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-x86_64.tar.xz /tmp
@@ -93,11 +88,6 @@ COPY /home-configs/ /home/devuser
 # ptk-help is the container's custom help splash. It is configured to
 # show on login in the .bash_profile file and can be called with `ptk-help`
 COPY /ptk-help /home/devuser/ptk-help
-
-# These folders are used by code-server to store its config and data
-# This will be bind mounted to the host at runtime to persist data.
-RUN mkdir -p /home/devuser/.config/code-server && \
-    mkdir -p /home/devuser/local/share/code-server
 
 RUN groupadd -g "$PGID" devuser && \
     # -m forces creation of a home directory  |  -u sets the UID
@@ -190,6 +180,13 @@ COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 # ~ Code-Server Setup ~ #
 #########################
 
+# These folders are used by code-server to store its config and data
+# This will be bind mounted to the host at runtime to persist data.
+RUN mkdir -p /home/devuser/.config/code-server && \
+    mkdir -p /home/devuser/.local/share/code-server && \
+    chown -R devuser:devuser /home/devuser/.config/code-server && \
+    chown -R devuser:devuser /home/devuser/.local/share/code-server
+
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 ######################
@@ -272,30 +269,6 @@ ENV PATH="/usr/local/go/bin:/home/devuser/go/bin:${PATH}"
 # Golang apps + optional mod cache cleanup (uncomment if mod cache not needed in image)
 RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest
 RUN gosu devuser go clean -modcache
-
-###########
-# VS Code #
-###########
-
-## NOTE: Instead of downloading extensions into the container, it would be better
-## to find where they are stored in the container and bind mount a volume to them.
-## This would allow for updates to the extensions without rebuilding the container.
-
-# VS Code extensions (server already copied from builder)
-# RUN gosu devuser /home/devuser/local/share/code-server/bin/code-server \
-#     --install-extension visualstudioexptteam.vscodeintellicode \
-#     --install-extension ms-python.python \
-#     --install-extension github.copilot \
-#     --install-extension eamodio.gitlens \
-#     --install-extension charliermarsh.ruff \
-#     --install-extension davidanson.vscode-markdownlint \
-#     --install-extension szpro.ultimatehover \
-#     --install-extension ms-azuretools.vscode-docker \
-#     --install-extension redhat.vscode-yaml \
-#     --install-extension tamasfe.even-better-toml \
-#     --install-extension textualize.textual-syntax-highlighter \
-#     --install-extension kokakiwi.vscode-just
-
 
 #######
 # Git #
