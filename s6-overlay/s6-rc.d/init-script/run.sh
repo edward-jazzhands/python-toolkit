@@ -42,12 +42,10 @@ else
     echo "****************************************************"
 fi
 
-# Write code-server config
-mkdir -p /home/devuser/.config/code-server
-cat > /home/devuser/.config/code-server/config.yaml <<EOF
+# Write code-server config as devuser
+su -s /bin/bash devuser -c "cat > /home/devuser/.config/code-server/config.yaml <<EOF
 bind-addr: 0.0.0.0:5001
 auth: password
 password: $PASSWORD
 cert: false
-EOF
-chown -R "$PUID":"$PGID" /home/devuser/.config
+EOF"

@@ -211,6 +211,11 @@ COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 # ~ Code-Server Setup ~ #
 #########################
 
+RUN mkdir -p /home/devuser/.config/code-server && \
+    mkdir -p /home/devuser/local/share/code-server && \
+    chown -R devuser:devuser /home/devuser/.config/code-server && \
+    chown -R devuser:devuser /home/devuser/local/share/code-server
+
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 ######################
