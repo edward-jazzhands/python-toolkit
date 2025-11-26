@@ -232,7 +232,6 @@ RUN gosu devuser uv tool install poetry && \
     gosu devuser uv tool install textual-dev && \
     gosu devuser uv tool install cloctui && \
     gosu devuser bash -c '(cd ~/ptk-help && uv sync)' && \
-    gosu devuser bash -c '(cd ~/ptk-admin-panel && uv sync)' && \
     gosu devuser uv cache clean
 
 #################
@@ -338,6 +337,9 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
 # to be improved without affecting the rest of the image. So we cache it last.
 
 COPY /ptk-admin-panel /home/devuser/ptk-admin-panel
+
+RUN gosu devuser bash -c '(cd ~/ptk-admin-panel && uv sync)' && \
+    uv cache clean
 
 ###########
 # Cleanup #
