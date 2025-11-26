@@ -269,9 +269,9 @@ RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest
 RUN gosu devuser go clean -modcache
 
 # Write Go PATH to bash_ext
-RUN printf "export PATH=\"/usr/local/go/bin:/home/devuser/go/bin:\${PATH}\"" >> /home/devuser/.bash_ext
+RUN printf "export PATH=\"/usr/local/go/bin:/home/devuser/go/bin:\${PATH}\"" >> /home/devuser/.bash_ext && \
     printf "\n\n" >> /home/devuser/.bash_ext && \
-
+    
 
 #######
 # Git #
