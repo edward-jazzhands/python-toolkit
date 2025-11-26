@@ -172,7 +172,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy from builder stage (avoids baking downloads into final layers)
 COPY --from=builder /usr/local/go /usr/local/go
-COPY --from=builder /home/devuser/local/share/code-server /home/devuser/local/share/code-server
 COPY --from=builder /tmp/s6-overlay-noarch.tar.xz /tmp/s6-overlay-noarch.tar.xz
 COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 
@@ -244,10 +243,10 @@ RUN gosu devuser bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/
     nvm install "$NODE_VERSION" && \
     nvm cache clear && \
     npm cache clean --force && \
-    wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bashrc" SHELL="$(which bash)" bash - && \
+    wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bash_ext" SHELL="$(which bash)" bash - && \
     export PATH="$PNPM_HOME:$PATH" && \
     pnpm store prune' && \
-    printf "\n\n" >> /home/devuser/.bashrc
+    printf "\n\n" >> /home/devuser/.bash_ext
 
 ENV PATH="$PNPM_HOME:$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 
@@ -256,19 +255,23 @@ ENV PATH="$PNPM_HOME:$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 ##########
 
 RUN gosu devuser bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh' && \
-    gosu devuser bash -c 'printf "%s\n" "eval \"\$(zoxide init bash)\"" >> ~/.bashrc' && \
-    printf "\n\n" >> /home/devuser/.bashrc
+    gosu devuser bash -c 'printf "%s\n" "eval \"\$(zoxide init bash)\"" >> ~/.bash_ext' && \
+    printf "\n\n" >> /home/devuser/.bash_ext
 
 ##########
 # Golang #
 ##########
 
-# Add the Go bin directory to the PATH
 ENV PATH="/usr/local/go/bin:/home/devuser/go/bin:${PATH}"
 
 # Golang apps + optional mod cache cleanup (uncomment if mod cache not needed in image)
 RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest
 RUN gosu devuser go clean -modcache
+
+# Write Go PATH to bash_ext
+RUN printf "export PATH=\"/usr/local/go/bin:/home/devuser/go/bin:\${PATH}\"" >> /home/devuser/.bash_ext
+    printf "\n\n" >> /home/devuser/.bash_ext && \
+
 
 #######
 # Git #
