@@ -2,26 +2,6 @@
 #~ PROGRAMMING TOOLKIT DOCKERFILE ~#
 ####################################
 
-# To optimize without removing any functionality, focused on:
-# - **Combining `RUN` commands** where possible to share setup steps and cleanups in fewer 
-# layers (e.g., consolidate all `apt-get` installs into one to avoid redundant `update` calls 
-#  and list downloads).
-# - **Aggressively cleaning caches and temp files** in the same `RUN` layer as the install 
-# (prevents them from being baked into the image). This is the biggest win—tools like UV, 
-# Homebrew, NVM, and PNPM all have substantial caches for downloads and builds.
-# - **Minor cleanups** like removing unnecessary system files (e.g., docs, man pages) that 
-# aren't critical for runtime but add ~100-200MB across packages.
-# - **Multi-stage builds** for downloads/extractions where feasible (e.g., fetch large archives 
-# like Go, VS Code server, and S6-overlay in a builder stage, then copy only the extracted results 
-# to the final image, avoiding tar.gz files persisting even if `rm`'d in the same layer).
-# - **Other tweaks**: Ensure non-interactive flags are consistent; order commands to leverage 
-# Docker's layer caching during rebuilds (least-changing first), though this affects build speed 
-# more than size.
-
-# These changes should reduce the image by 1-2GB or more, depending on exact cache sizes during 
-# your build. Test iteratively with `docker image ls` to measure. Tools like `dive` (external) 
-# can help analyze layers post-build.
-
 # ███████████████████████████████
 # █                             █
 # █  ▄   ▘▜  ▌      ▄▖▗         █
@@ -108,11 +88,6 @@ COPY /home-configs/ /home/devuser
 # ptk-help is the container's custom help splash. It is configured to
 # show on login in the .bash_profile file and can be called with `ptk-help`
 COPY /ptk-help /home/devuser/ptk-help
-
-# ptk-admin-panel is the container's admin panel. It is a web app built with
-# Pytho and Flask. It is started with the container by S6-Overlay and served
-# on port 5000.
-COPY /ptk-admin-panel /home/devuser/ptk-admin-panel
 
 # FUTURE GOAL: Make UID and GID be environment variables that can be set
 # at runtime.
@@ -352,34 +327,22 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/code-server/run
 
+
+###################
+# PTK Admin Panel #
+###################
+
+# ptk-admin-panel is the container's admin panel. It is a web app built with
+# Flask and React. It is started with the container by S6-Overlay and served
+# on port 5000.
+# This is at the end of the file because it's a git submodule, and it needs
+# to be improved without affecting the rest of the image. So we cache it last.
+
+COPY /ptk-admin-panel /home/devuser/ptk-admin-panel
+
 ###########
 # Cleanup #
 ###########
 
 ENV DEBIAN_FRONTEND=dialog
 
-
-# ### Key Changes and Rationale
-# - **Multi-stage build**: Downloads/extracts Go, VS Code server, and S6-overlay in a 
-# `builder` stage, then copies only the results. This avoids including the raw `.tar.gz` 
-# files (50-100MB each) in the final image.
-# - **Consolidated apt**: Merged all `apt-get` into one `RUN` (including GitHub CLI's `gh`). 
-# Eliminates redundant `update` downloads (~50MB savings across layers) and ensures one cleanup.
-# - **Cache cleaning**:
-#   - Homebrew: `brew cleanup -s --prune=0` scrubs all caches and old downloads immediately 
-#       after install.
-#   - UV: `uv cache clean` after all Python/tool installs (can save hundreds of MB to GB from 
-#       Python downloads).
-#   - NVM: `nvm cache clear` and `npm cache clean --force` after Node install (addresses 
-#       potential GB-scale cache bloat).
-#   - PNPM: `pnpm store prune` after install (removes unused store entries).
-#   - Go: Optional `go clean -modcache` (uncomment if acceptable; saves mod downloads for the 
-#       single `go install`).
-# - **System cleanup**: Added `rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/locale/*` 
-#       in the apt `RUN` (saves 100-200MB; man pages/docs are rarely needed in containers, 
-#       but reinstallable at runtime if required).
-# - **Combined small RUNs**: Merged `.bashrc` appends, `printf "\n\n"`, and related setups 
-#       where logical to reduce layers.
-# - **No functionality removed**: All tools, versions, configs, and user capabilities remain 
-#       intact. Runtime installs (e.g., new brew formulae or uv tools) are still possible,
-#       though caches will start fresh.
