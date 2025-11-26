@@ -76,6 +76,11 @@ WORKDIR /home/devuser
 #~   USER CONFIG    ~#
 ######################
 
+# Set default UID/GID as environment variables
+# 568 is the default for TrueNAS apps.
+ENV PUID=568 \
+    PGID=568
+
 # Here we copy the .bashrc file and other config files.
 # This is where you would add in your own config files.
 # NOTE: This dockerfile is designed so that essential configs
@@ -89,19 +94,18 @@ COPY /home-configs/ /home/devuser
 # show on login in the .bash_profile file and can be called with `ptk-help`
 COPY /ptk-help /home/devuser/ptk-help
 
-# FUTURE GOAL: Make UID and GID be environment variables that can be set
-# at runtime.
+# These folders are used by code-server to store its config and data
+# This will be bind mounted to the host at runtime to persist data.
+RUN mkdir -p /home/devuser/.config/code-server && \
+    mkdir -p /home/devuser/local/share/code-server && \
 
-# User/group setup. 568 is the default for TrueNAS apps.
-# -g 568 tells it to assign GID 568. If you don’t specify one, it auto-assigns the next available ID
-RUN groupadd -g 568 devuser && \
-    # -m forces creation of a home directory. If /home/devuser doesn’t exist, it gets created.
-    # -u 568 forces the UID (user ID) to be 568. If omitted, it picks the next free UID.
-    # -g devuser sets the user’s primary group. This group must already exist (we created it above).
-    # -s /bin/bash sets the user’s login shell to /bin/bash:
-    useradd -m -u 568 -g devuser -s /bin/bash devuser && \
-    # -R means recursive. Note: this chown is possibly not necessary but is here anyway as a safety.
-    chown -R 568:568 /home/devuser && \
+RUN groupadd -g "$PGID" devuser && \
+    # -m forces creation of a home directory  |  -u sets the UID
+    # -g sets the group. Group must already exist (we created it above).
+    # -s sets the user’s login shell
+    useradd -m -u "$PUID" -g devuser -s /bin/bash devuser && \
+    # -R means recursive.
+    chown -R devuser:devuser /home/devuser && \
     # Add devuser to sudoers:
     echo 'devuser ALL=(root) ALL' >> /etc/sudoers
 
@@ -185,11 +189,6 @@ COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 #########################
 # ~ Code-Server Setup ~ #
 #########################
-
-RUN mkdir -p /home/devuser/.config/code-server && \
-    mkdir -p /home/devuser/local/share/code-server && \
-    chown -R devuser:devuser /home/devuser/.config/code-server && \
-    chown -R devuser:devuser /home/devuser/local/share/code-server
 
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
