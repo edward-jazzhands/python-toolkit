@@ -207,7 +207,10 @@ COPY --from=builder /home/devuser/local/share/code-server /home/devuser/local/sh
 COPY --from=builder /tmp/s6-overlay-noarch.tar.xz /tmp/s6-overlay-noarch.tar.xz
 COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 
-# Coder.com Code-Server
+#########################
+# ~ Code-Server Setup ~ #
+#########################
+
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 ######################
