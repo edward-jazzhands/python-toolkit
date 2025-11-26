@@ -338,7 +338,8 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
 
 COPY /ptk-admin-panel /home/devuser/ptk-admin-panel
 
-RUN gosu devuser bash -c '(cd ~/ptk-admin-panel && uv sync)' && \
+RUN chown -R devuser:devuser /home/devuser/ptk-admin-panel && \
+    gosu devuser bash -c '(cd ~/ptk-admin-panel && uv sync)' && \
     uv cache clean
 
 ###########
