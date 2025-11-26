@@ -97,7 +97,7 @@ COPY /ptk-help /home/devuser/ptk-help
 # These folders are used by code-server to store its config and data
 # This will be bind mounted to the host at runtime to persist data.
 RUN mkdir -p /home/devuser/.config/code-server && \
-    mkdir -p /home/devuser/local/share/code-server && \
+    mkdir -p /home/devuser/local/share/code-server
 
 RUN groupadd -g "$PGID" devuser && \
     # -m forces creation of a home directory  |  -u sets the UID
