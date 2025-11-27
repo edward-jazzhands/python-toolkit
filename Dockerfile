@@ -422,7 +422,7 @@ RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" > /etc/environm
 
 # Also configure SSH to preserve the PATH variable
 #! MOVE THIS TO sshd_config FILE
-RUN echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
+RUN printf "\nPermitUserEnvironment yes\n" >> /etc/ssh/sshd_config
 
 ENV DEBIAN_FRONTEND=dialog
 
