@@ -416,5 +416,13 @@ RUN chown -R devuser:devuser /ptk-admin-panel && \
 # Cleanup #
 ###########
 
+# Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
+# SSH will read this file when starting sessions
+RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" > /etc/environment
+
+# Also configure SSH to preserve the PATH variable
+#! MOVE THIS TO sshd_config FILE
+RUN echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
+
 ENV DEBIAN_FRONTEND=dialog
 
