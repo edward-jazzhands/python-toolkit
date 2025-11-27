@@ -83,4 +83,4 @@ EOF"
 
 
 # Copy default configs to home dir
-cp -r /default-configs/* /home/devuser
+cp -r /default-configs/. /home/devuser
