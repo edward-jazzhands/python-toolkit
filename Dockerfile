@@ -95,6 +95,7 @@ RUN groupadd -g ${PGID} devuser && \
     useradd -m -u ${PUID} -g devuser -s /bin/bash devuser && \
     # -R means recursive.
     chown -R devuser:devuser /home/devuser && \
+    chown -R devuser:devuser /ptk-help && \
     # Add devuser to sudoers:
     echo 'devuser ALL=(root) ALL' >> /etc/sudoers
 
@@ -179,10 +180,10 @@ COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 # ~ Code-Server Setup ~ #
 #########################
 
-# Note that this must run as root
+#! NOTE: This MUST run as root
 RUN curl -fsSL https://code-server.dev/install.sh | sh && \
     # I am not sure that it creates any folders in the devuser home dir
-    # when it installs as root. But it's here just in case.
+    # when it installs. But it's here just in case.
     chown -R devuser:devuser /home/devuser
 
 # NOTE: The devuser/.config and devuser/.local/share/code-server folders
@@ -264,24 +265,24 @@ ENV UV_BREAK_SYSTEM_PACKAGES=1
 ENV PATH="/opt/uv/bin:/opt/uv/tool_bin:${PATH}"
 
 RUN mkdir -p /opt/uv/{cache,credentials,bin,python_bin,python_cache,python_installs,tool_bin,tools,pyx_credentials} && \
-    chmod -R 777 /opt/uv
+    chown -R devuser:devuser /opt/uv
 
 ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13 3.14"
 
-RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' && \
-    gosu devuser uv python install $PYTHON_VERSIONS
+RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    uv python install $PYTHON_VERSIONS'
 
 # Python tools + project syncs + cleanup
-RUN gosu devuser uv tool install poetry && \
-    gosu devuser uv tool install nox && \
-    gosu devuser uv tool install rust-just && \
-    gosu devuser uv tool install rich-cli && \
-    gosu devuser uv tool install ducktools-pytui && \
-    gosu devuser uv tool install harlequin && \
-    gosu devuser uv tool install textual-dev && \
-    gosu devuser uv tool install cloctui && \
-    gosu devuser bash -c '(cd /ptk-help && uv sync)' && \
-    gosu devuser uv cache clean
+RUN gosu devuser bash -c 'uv tool install poetry && \
+    uv tool install nox && \
+    uv tool install rust-just && \
+    uv tool install rich-cli && \
+    uv tool install ducktools-pytui && \
+    uv tool install harlequin && \
+    uv tool install textual-dev && \
+    uv tool install cloctui && \
+    cd /ptk-help && uv sync && \
+    uv cache clean'
 
 #################
 #~  NODE / JS  ~#
@@ -306,8 +307,8 @@ ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 RUN mkdir -p /opt/nvm/versions/node/v$NODE_VERSION/bin && \
     mkdir -p /opt/nvm/versions/node/v$NODE_VERSION/include/node && \
     mkdir -p /opt/pnpm && \
-    chmod -R 777 /opt/nvm && \
-    chmod -R 777 /opt/pnpm
+    chown -R devuser:devuser /opt/nvm && \
+    chown -R devuser:devuser /opt/pnpm
 
 # NVM
 RUN gosu devuser bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
@@ -342,25 +343,28 @@ RUN printf "\n\n" >> /etc/bash.bashrc && \
 ENV PATH="/opt/go/bin:${PATH}"
 
 ENV GOCACHE="/opt/go/cache/go-build"
-ENV GOENV="/opt/go/config/go/env"
 ENV GOMODCACHE="/opt/go/cache/go-mod"
 ENV GOPATH="/opt/go"
-ENV GOTELEMETRYDIR="/opt/go/config/telemetry"
+
+# NOTE: config folder should stay in home dir
+# ENV GOENV="/opt/go/config/go/env"
+# ENV GOTELEMETRYDIR="/opt/go/config/telemetry"
+
 # NOTE: not changing the default go install dir as of right now.
 # Try changing it to /opt/go/sdk in the future.
 ENV GOROOT="/usr/local/go"
 ENV GOTOOLDIR="/usr/local/go/pkg/tool/linux_amd64"
 
-
 RUN mkdir -p /opt/go/cache/go-build && \
     mkdir -p /opt/go/cache/go-mod && \
     mkdir -p /opt/go/config/go/env && \
     mkdir -p /opt/go/config/telemetry && \
-    chmod -R 777 /opt/go
+    chown -R devuser:devuser /opt/go
 
 # Golang apps + optional mod cache cleanup (uncomment if mod cache not needed in image)
-RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest && \
-    gosu devuser go clean -modcache
+RUN gosu devuser bash -c \
+    'go install github.com/gopasspw/git-credential-gopass@latest && \
+    go clean -modcache'
     
 
 #########
@@ -404,8 +408,9 @@ COPY /ptk-admin-panel /ptk-admin-panel
 
 # NOTE: This possibly does not need to run as devuser. Experiment
 # with running this as root instead.
-RUN gosu devuser bash -c '(cd /ptk-admin-panel && uv sync)' && \
-    gosu devuser uv cache clean
+RUN chown -R devuser:devuser /ptk-admin-panel && \
+    gosu devuser bash -c \
+    '(cd /ptk-admin-panel && uv sync && uv cache clean)'
 
 ###########
 # Cleanup #
