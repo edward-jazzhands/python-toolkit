@@ -208,7 +208,7 @@ RUN gosu devuser bash -c "NONINTERACTIVE=1 $(curl -fsSL \
     https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 RUN gosu devuser brew install cloc lazygit gopass && \
-    brew cleanup -s --prune=0
+    gosu devuser brew cleanup -s --prune=0
 
 #########################
 # ~ UV / Python Setup ~ #
@@ -269,19 +269,19 @@ RUN mkdir -p /opt/uv/{cache,credentials,bin,python_bin,python_cache,python_insta
 ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13 3.14"
 
 RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' && \
-    uv python install $PYTHON_VERSIONS
+    gosu devuser uv python install $PYTHON_VERSIONS
 
 # Python tools + project syncs + cleanup
 RUN gosu devuser uv tool install poetry && \
-    uv tool install nox && \
-    uv tool install rust-just && \
-    uv tool install rich-cli && \
-    uv tool install ducktools-pytui && \
-    uv tool install harlequin && \
-    uv tool install textual-dev && \
-    uv tool install cloctui && \
-    bash -c '(cd /ptk-help && uv sync)' && \
-    uv cache clean
+    gosu devuser uv tool install nox && \
+    gosu devuser uv tool install rust-just && \
+    gosu devuser uv tool install rich-cli && \
+    gosu devuser uv tool install ducktools-pytui && \
+    gosu devuser uv tool install harlequin && \
+    gosu devuser uv tool install textual-dev && \
+    gosu devuser uv tool install cloctui && \
+    gosu devuser bash -c '(cd /ptk-help && uv sync)' && \
+    gosu devuser uv cache clean
 
 #################
 #~  NODE / JS  ~#
@@ -306,7 +306,7 @@ ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 RUN mkdir -p /opt/nvm/versions/node/v$NODE_VERSION/bin && \
     mkdir -p /opt/nvm/versions/node/v$NODE_VERSION/include/node && \
     mkdir -p /opt/pnpm && \
-    chmod -R 777 /opt/nvm
+    chmod -R 777 /opt/nvm && \
     chmod -R 777 /opt/pnpm
 
 # NVM
@@ -360,7 +360,7 @@ RUN mkdir -p /opt/go/cache/go-build && \
 
 # Golang apps + optional mod cache cleanup (uncomment if mod cache not needed in image)
 RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest && \
-    go clean -modcache
+    gosu devuser go clean -modcache
     
 
 #########
@@ -405,7 +405,7 @@ COPY /ptk-admin-panel /ptk-admin-panel
 # NOTE: This possibly does not need to run as devuser. Experiment
 # with running this as root instead.
 RUN gosu devuser bash -c '(cd /ptk-admin-panel && uv sync)' && \
-    uv cache clean
+    gosu devuser uv cache clean
 
 ###########
 # Cleanup #
