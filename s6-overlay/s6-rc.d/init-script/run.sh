@@ -2,9 +2,9 @@
 # set -eu will cause exit immediately if any command fails
 set -eu
 
-# Get UID/GID from environment variables (default to 568)
-PUID=${PUID:-568}
-PGID=${PGID:-568}
+# Get UID/GID from environment variables
+PUID=${PUID:-3001}
+PGID=${PGID:-3000}
 
 # Only modify user/group if they differ from current values
 CURRENT_UID=$(id -u devuser)
@@ -12,7 +12,6 @@ CURRENT_GID=$(id -g devuser)
 HOME_DIR="/home/devuser"
 
 # Copy default configs to home dir
-chown -R devuser:devuser /default-configs
 cp -r /default-configs/. /home/devuser
 
 
@@ -39,21 +38,21 @@ if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
     fi
     
     echo "Updating ownership of $HOME_DIR"
-
-    # Update ownership of home directory and any other directories
-    # REMOVED. TOO SLOW.
-    # chown -R "$PUID":"$PGID" /home/devuser
-
     START_TIME=$(date +%s)
-
-    # New faster method:
-    # Selective chown: only operate on files that don't already match ownership.
-    find "$HOME_DIR" \( -not -uid "$PUID" -o -not -gid "$PGID" \) \
-    -exec chown "$PUID:$PGID" {} +
+    chown -R "$PUID":"$PGID" /home/devuser
 
     END_TIME=$(date +%s)
     ELAPSED_SECONDS=$((END_TIME - START_TIME))
     echo "Time elapsed for chown of home dir: ${ELAPSED_SECONDS}s"
+else
+    # If UID/GID was not changed, we still need to set correct ownership
+    # of the default config files.
+    chown devuser:devuser /home/devuser/.bashrc
+    chown devuser:devuser /home/devuser/.bash_profile
+    chown devuser:devuser /home/devuser/.gitignore_global
+    chown devuser:devuser /home/devuser/.gitconfig
+    chown devuser:devuser /home/devuser/.tmux.conf
+    chown devuser:devuser /home/devuser/.justfile
 fi
 
 if [ -n "$PASSWORD" ]; then
