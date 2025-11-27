@@ -2,22 +2,17 @@
 # The .bash_profile file (or just regular .profile) must be present
 # in order for .bashrc to be sourced upon user login to bash sessions.
 
-
 echo "Type 'tkhelp' (Tool-Kit Help) to view all available programs."
+
+# Sets my global git ignore preferences:
+git config --global core.excludesfile /home/devuser/.gitignore_global
+
+# Sets gopass as the default git credential helper:
+git config --global credential.helper gopass
 
 ###########
 # EXPORTS #
 ###########
-
-export LANG=C.UTF-8
-export LC_ALL=C.UTF-8
-
-# UV by default uses symlinks for cache and virtual environments.
-# But this is inside a container where the projects are bind mounted.
-# This means the UV cache folder will be on a different file system than
-# the projects themselves. so we want to force it to copy files into each
-# venv instead of symlinking. That is what this variable does:
-export UV_LINK_MODE=copy
 
 # Poertry by default creates virtual environments in a special secret
 # cache location. We don't want that, we want it to create .venv folders

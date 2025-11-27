@@ -19,12 +19,7 @@ if [ -f "$HOME/.bashrc" ]; then
     . "$HOME/.bashrc"
 fi
 
-# source the .bash_ext file if it exists
-if [ -f "$HOME/.bash_ext" ]; then
-    . "$HOME/.bash_ext"
-fi
-
 # run ptk-help
-cd ~/ptk-help
+cd /ptk-help
 uv run main.py
 cd ~

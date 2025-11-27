@@ -80,3 +80,7 @@ auth: password
 password: $PASSWORD
 cert: false
 EOF"
+
+
+# Copy default configs to home dir
+cp -r /default-configs/* /home/devuser
