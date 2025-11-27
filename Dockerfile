@@ -340,7 +340,7 @@ RUN printf "\n\n" >> /etc/bash.bashrc && \
 # Golang #
 ##########
 
-ENV PATH="/opt/go/bin:${PATH}"
+ENV PATH="/usr/local/go/bin:${PATH}"
 
 ENV GOCACHE="/opt/go/cache/go-build"
 ENV GOMODCACHE="/opt/go/cache/go-mod"
