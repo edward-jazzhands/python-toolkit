@@ -11,6 +11,10 @@ CURRENT_UID=$(id -u devuser)
 CURRENT_GID=$(id -g devuser)
 HOME_DIR="/home/devuser"
 
+# Copy default configs to home dir
+chown -R devuser:devuser /default-configs
+cp -r /default-configs/. /home/devuser
+
 
 if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
 
@@ -80,7 +84,3 @@ auth: password
 password: $PASSWORD
 cert: false
 EOF"
-
-
-# Copy default configs to home dir
-cp -r /default-configs/. /home/devuser
