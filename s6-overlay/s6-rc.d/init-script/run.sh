@@ -93,3 +93,7 @@ auth: password
 password: $PASSWORD
 cert: false
 EOF"
+
+
+# Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
+env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" | grep -v "^HOSTNAME=" > /etc/environment

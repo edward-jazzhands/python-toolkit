@@ -417,13 +417,10 @@ RUN chown -R devuser:devuser /ptk-admin-panel && \
 # Cleanup #
 ###########
 
-# Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
-RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" > /etc/environment
-
 # This will configure PAM (Pluggable Authentication Modules) to allow reading environment
 # variables from the user's environment. This is necessary for SSH to preserve the PATH
 # variable and all other env vars created in the container.
-RUN sed -i '/pam_env.so # \[1\]/s/pam_env.so/pam_env.so readenv=1/' /etc/pam.d/sshd
+RUN sed -i '/pam_env.so # \[1\]/s/pam_env.so/pam_env.so readenv=1 user_readenv=1/' /etc/pam.d/sshd
 
 ENV DEBIAN_FRONTEND=dialog
 
