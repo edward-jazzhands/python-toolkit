@@ -20,9 +20,15 @@ if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
     if [ "$CURRENT_UID" != "$PUID" ]; then
         echo "Changing UID from $CURRENT_UID to $PUID"
         # OLD: This automatically activates a chown of the home dir and is slow
-        # usermod -u "$PUID" devuser
+
+
+        START_TIME=$(date +%s)
+        usermod -u "$PUID" devuser
+        END_TIME=$(date +%s)
+        ELAPSED_SECONDS=$((END_TIME - START_TIME))
+        echo "Time elapsed for user mod: ${ELAPSED_SECONDS}s"
         # NEW: This is faster, but requires a manual chown of the home dir:
-        sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PUID:/" /etc/passwd
+        # sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PUID:/" /etc/passwd
     else
         echo "Using default UID of $PUID"
     fi
@@ -30,20 +36,22 @@ if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
     if [ "$CURRENT_GID" != "$PGID" ]; then
         echo "Changing GID from $CURRENT_GID to $PGID"
         # OLD: same reason as above
-        # groupmod -g "$PGID" devuser
+        groupmod -g "$PGID" devuser
         # NEW:
-        sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PGID:/" /etc/group
+        # sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PGID:/" /etc/group
     else
         echo "Using default GID of $PGID"
     fi
     
-    echo "Updating ownership of $HOME_DIR"
     START_TIME=$(date +%s)
+    echo "Updating ownership of $HOME_DIR"
     chown -R "$PUID":"$PGID" /home/devuser
-
+    echo "Updating ownership of PTK Admin Panel and PTK Help"
+    chown -R "$PUID":"$PGID" /ptk-admin-panel
+    chown -R "$PUID":"$PGID" /ptk-help
     END_TIME=$(date +%s)
     ELAPSED_SECONDS=$((END_TIME - START_TIME))
-    echo "Time elapsed for chown of home dir: ${ELAPSED_SECONDS}s"
+    echo "Time elapsed for ownership updates: ${ELAPSED_SECONDS}s"
 else
     # If UID/GID was not changed, we still need to set correct ownership
     # of the default config files.
