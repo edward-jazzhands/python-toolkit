@@ -436,8 +436,9 @@ RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_="
 # variable and all other env vars created in the container.
 RUN sed -i '/pam_env.so # \[1\]/s/pam_env.so/pam_env.so readenv=1 user_readenv=1/' /etc/pam.d/sshd
 
-# Remove the default PATH from /etc/profile
-RUN sed -i 's|^ PATH=|# PATH=|g' /etc/profile
+# Copy over the custom /etc/profile file
+COPY /required-configs/profile /etc/profile
+RUN chmod 644 /etc/profile
 
 ENV DEBIAN_FRONTEND=dialog
 
