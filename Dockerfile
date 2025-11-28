@@ -263,6 +263,10 @@ ENV PYX_CREDENTIALS_DIR=/opt/uv/pyx_credentials
 # Python can lead to unexpected behavior.
 ENV UV_BREAK_SYSTEM_PACKAGES=1
 
+# Poertry by default creates virtual environments in its own cache location.
+# We want it to instead create .venv folders inside the project directory.
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
 ENV PATH="/opt/uv/bin:/opt/uv/tool_bin:${PATH}"
 
 RUN mkdir -p /opt/uv/{cache,credentials,bin,python_bin,python_cache,python_installs,tool_bin,tools,pyx_credentials} && \
@@ -368,9 +372,16 @@ RUN gosu devuser bash -c \
     go clean -modcache'
     
 
-#########
-# GNUPG #
-#########
+###############
+# GNUPG / GCM #
+###############
+
+# This is because git credential manager expects a program called
+# 'libicu' to be available in the system to handle internationalization
+# (ie. characters from other languages).
+# This program is fairly large and is not needed at the moment.
+# This will make it ignore the error and continue running.
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 
 ENV GNUPGHOME=/opt/gnupg
 
@@ -416,6 +427,9 @@ RUN chown -R devuser:devuser /ptk-admin-panel && \
 ###########
 # Cleanup #
 ###########
+
+# Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
+RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" | grep -v "^HOSTNAME=" > /etc/environment
 
 # This will configure PAM (Pluggable Authentication Modules) to allow reading environment
 # variables from the user's environment. This is necessary for SSH to preserve the PATH

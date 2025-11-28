@@ -2,7 +2,15 @@
 # The .bash_profile file (or just regular .profile) must be present
 # in order for .bashrc to be sourced upon user login to bash sessions.
 
+###################
+# Welcome Message #
+###################
+
 echo "Type 'tkhelp' (Tool-Kit Help) to view all available programs."
+
+##################
+# Initialization #
+##################
 
 # Sets my global git ignore preferences:
 git config --global core.excludesfile /home/devuser/.gitignore_global
@@ -10,31 +18,12 @@ git config --global core.excludesfile /home/devuser/.gitignore_global
 # Sets gopass as the default git credential helper:
 git config --global credential.helper gopass
 
-###########
-# EXPORTS #
-###########
 
-# Poertry by default creates virtual environments in a special secret
-# cache location. We don't want that, we want it to create .venv folders
-# inside the project directory:
-export POETRY_VIRTUALENVS_IN_PROJECT=true
+############
+# THE REST #
+############
 
-# This is because some apps such as git credential manager expect a program called
-# 'libicu' to be available in the system to handle internationalization
-# (ie. characters from other languages).
-# This program is fairly large and is not needed in a container.
-# This will make it ignore the error and continue running.
-export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
-
-# Add local bin env folder to PATH (This is used by uv)
-. "$HOME/.local/bin/env"
-
-export projects="$HOME/workspace/vscode-projects"
 export mygithub="https://github.com/edward-jazzhands"
-
-###########
-# ALIASES #
-###########
 
 alias ls="ls -lFa --color=auto"
 alias bat="batcat"
@@ -47,16 +36,9 @@ alias bashrc="nano ~/.bashrc"
 alias activate="source .venv/bin/activate"
 
 
-#############
-# FUNCTIONS #
-#############
-
-# ~ Generic functions ~ #
-# --------------------- #
-
 # Run main launcher script for the python-toolkit
 tkhelp() {
-    (cd ~/ptk-help && uv run main.py)
+    (cd /ptk-help && uv run main.py)
 }
 
 # Prints a color gradient to test truecolor support
@@ -74,9 +56,6 @@ colortest() {
   }'
 }
 
-# ~ Fuzzy functions ~ #
-# ------------------- #
-
 # fuzzy cd
 fcd() {
   local dir
@@ -87,9 +66,6 @@ fcd() {
 fsh() {
   eval "$(history | fzf | sed 's/ *[0-9]* *//')"
 }
-
-# ~ Ripgrep functions ~ #
-# --------------------- #
 
 # search by file name
 rgf() {

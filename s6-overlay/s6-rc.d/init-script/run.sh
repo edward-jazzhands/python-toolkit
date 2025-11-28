@@ -94,6 +94,10 @@ password: $PASSWORD
 cert: false
 EOF"
 
-
-# Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
-env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" | grep -v "^HOSTNAME=" > /etc/environment
+# Append any new runtime environment variables that are not already in /etc/environment
+printenv | while IFS= read -r line; do
+    key=$(echo "$line" | cut -d= -f1)
+    if ! grep -q "^${key}=" /etc/environment 2>/dev/null; then
+        echo "$line" >> /etc/environment
+    fi
+done
