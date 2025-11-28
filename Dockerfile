@@ -96,6 +96,7 @@ RUN groupadd -g ${PGID} devuser && \
     # -R means recursive.
     chown -R devuser:devuser /home/devuser && \
     chown -R devuser:devuser /ptk-help && \
+    chown -R devuser:devuser /default-configs && \
     # Add devuser to sudoers:
     echo 'devuser ALL=(root) ALL' >> /etc/sudoers
 
@@ -103,7 +104,7 @@ RUN groupadd -g ${PGID} devuser && \
 #~     SSH SETUP    ~#
 ######################
 
-COPY sshd_config /etc/ssh/sshd_config
+COPY /required-configs/sshd_config /etc/ssh/sshd_config
 
 RUN mkdir /run/sshd && \
     # SSH Server wants the following permissions and ownership
@@ -417,12 +418,12 @@ RUN chown -R devuser:devuser /ptk-admin-panel && \
 ###########
 
 # Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
-# SSH will read this file when starting sessions
 RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" > /etc/environment
 
-# Also configure SSH to preserve the PATH variable
-#! MOVE THIS TO sshd_config FILE
-RUN printf "\nPermitUserEnvironment yes\n" >> /etc/ssh/sshd_config
+# This will configure PAM (Pluggable Authentication Modules) to allow reading environment
+# variables from the user's environment. This is necessary for SSH to preserve the PATH
+# variable and all other env vars created in the container.
+RUN sed -i '/pam_env.so # \[1\]/s/pam_env.so/pam_env.so readenv=1/' /etc/pam.d/sshd
 
 ENV DEBIAN_FRONTEND=dialog
 

@@ -47,6 +47,7 @@ if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
 else
     # If UID/GID was not changed, we still need to set correct ownership
     # of the default config files.
+    #! TEST if still necessary
     chown devuser:devuser /home/devuser/.bashrc
     chown devuser:devuser /home/devuser/.bash_profile
     chown devuser:devuser /home/devuser/.gitignore_global
