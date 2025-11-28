@@ -5,3 +5,4 @@ AuthorizedKeysFile .ssh/authorized_keys
 LogLevel INFO
 AcceptEnv COLORTERM
 PermitUserEnvironment yes
+UsePAM yes
