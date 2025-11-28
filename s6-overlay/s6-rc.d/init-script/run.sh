@@ -95,7 +95,8 @@ cert: false
 EOF"
 
 # Append any new runtime environment variables that are not already in /etc/environment
-printenv | while IFS= read -r line; do
+# Skip HOME because we don't want root's home dir, also skip PASSWORD
+printenv | grep -v "^HOME=" | grep -v "^PASSWORD=" | while IFS= read -r line; do
     key=$(echo "$line" | cut -d= -f1)
     if ! grep -q "^${key}=" /etc/environment 2>/dev/null; then
         echo "$line" >> /etc/environment
