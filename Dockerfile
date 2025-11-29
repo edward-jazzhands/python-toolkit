@@ -1,17 +1,21 @@
-####################################
-#~ PROGRAMMING TOOLKIT DOCKERFILE ~#
-####################################
+# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+# ┃ ▗▄▄▖ ▗▄▄▖  ▗▄▖  ▗▄▄▖▗▄▄▖  ▗▄▖ ▗▖  ▗▖▗▖  ▗▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖ ┃
+# ┃ ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌ ▐▌▐▌ ▐▌▐▛▚▞▜▌▐▛▚▞▜▌  █  ▐▛▚▖▐▌▐▌    ┃
+# ┃ ▐▛▀▘ ▐▛▀▚▖▐▌ ▐▌▐▌▝▜▌▐▛▀▚▖▐▛▀▜▌▐▌  ▐▌▐▌  ▐▌  █  ▐▌ ▝▜▌▐▌▝▜▌ ┃
+# ┃ ▐▌   ▐▌ ▐▌▝▚▄▞▘▝▚▄▞▘▐▌ ▐▌▐▌ ▐▌▐▌  ▐▌▐▌  ▐▌▗▄█▄▖▐▌  ▐▌▝▚▄▞▘ ┃
+# ┃                                                            ┃
+# ┃                     ▗▄▄▄▖▗▄▖  ▗▄▖ ▗▖   ▗▖ ▗▖▗▄▄▄▖▗▄▄▄▖     ┃
+# ┃                       █ ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌▗▞▘  █    █       ┃
+# ┃                       █ ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▛▚▖   █    █       ┃
+# ┃                       █ ▝▚▄▞▘▝▚▄▞▘▐▙▄▄▖▐▌ ▐▌▗▄█▄▖  █       ┃
+# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-# ███████████████████████████████
-# █                             █
-# █  ▄   ▘▜  ▌      ▄▖▗         █
-# █  ▙▘▌▌▌▐ ▛▌█▌▛▘  ▚ ▜▘▀▌▛▌█▌  █
-# █  ▙▘▙▌▌▐▖▙▌▙▖▌   ▄▌▐▖█▌▙▌▙▖  █
-# █                       ▄▌    █
-# █                             █
-# ███████████████████████████████
 
-# Use multi-stage build for downloading large archives
+#   ▄   ▘▜  ▌      ▄▖▗         
+#   ▙▘▌▌▌▐ ▛▌█▌▛▘  ▚ ▜▘▀▌▛▌█▌  
+#   ▙▘▙▌▌▐▖▙▌▙▖▌   ▄▌▐▖█▌▙▌▙▖  
+#                        ▄▌    
+
 FROM debian:bookworm-slim AS builder
 
 # Set non-interactive to avoid prompts
@@ -27,15 +31,10 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-
 ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-x86_64.tar.xz /tmp
 
 
-# ███████████████████████████████
-# █                             █
-# █   ▄▖         ▌  ▄▖▗         █
-# █   ▚ █▌▛▘▛▌▛▌▛▌  ▚ ▜▘▀▌▛▌█▌  █
-# █   ▄▌▙▖▙▖▙▌▌▌▙▌  ▄▌▐▖█▌▙▌▙▖  █
-# █                       ▄▌    █
-# █                             █
-# ███████████████████████████████
-
+#   ▄▖         ▌  ▄▖▗         
+#   ▚ █▌▛▘▛▌▛▌▛▌  ▚ ▜▘▀▌▛▌█▌  
+#   ▄▌▙▖▙▖▙▌▌▌▙▌  ▄▌▐▖█▌▙▌▙▖  
+#                       ▄▌    
 
 FROM debian:bookworm-slim
 
@@ -328,7 +327,6 @@ RUN gosu devuser bash -c 'wget -qO- https://get.pnpm.io/install.sh | bash - && \
 
 RUN printf "\n\n" >> /etc/bash.bashrc && \
     printf '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /etc/bash.bashrc && \
-    printf "\n\n" >> /etc/bash.bashrc && \
     printf '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"' >> /etc/bash.bashrc
 
 ##########
@@ -337,7 +335,6 @@ RUN printf "\n\n" >> /etc/bash.bashrc && \
 
 RUN gosu devuser bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh'
 
-# Remember that modifying /etc/bash.bashrc must be done as root:
 RUN printf "\n\n" >> /etc/bash.bashrc && \
     printf 'eval "$(zoxide init bash)"' >> /etc/bash.bashrc
 
