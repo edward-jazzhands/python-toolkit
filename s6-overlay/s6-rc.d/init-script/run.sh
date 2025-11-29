@@ -2,14 +2,17 @@
 # set -eu will cause exit immediately if any command fails
 set -eu
 
-# Get UID/GID from environment variables (default to 568)
-PUID=${PUID:-568}
-PGID=${PGID:-568}
+# Get UID/GID from environment variables
+PUID=${PUID:-3001}
+PGID=${PGID:-3000}
 
 # Only modify user/group if they differ from current values
 CURRENT_UID=$(id -u devuser)
 CURRENT_GID=$(id -g devuser)
 HOME_DIR="/home/devuser"
+
+# Copy default configs to home dir
+cp -r /default-configs/. /home/devuser
 
 
 if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
@@ -17,9 +20,15 @@ if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
     if [ "$CURRENT_UID" != "$PUID" ]; then
         echo "Changing UID from $CURRENT_UID to $PUID"
         # OLD: This automatically activates a chown of the home dir and is slow
-        # usermod -u "$PUID" devuser
+
+
+        START_TIME=$(date +%s)
+        usermod -u "$PUID" devuser
+        END_TIME=$(date +%s)
+        ELAPSED_SECONDS=$((END_TIME - START_TIME))
+        echo "Time elapsed for user mod: ${ELAPSED_SECONDS}s"
         # NEW: This is faster, but requires a manual chown of the home dir:
-        sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PUID:/" /etc/passwd
+        # sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PUID:/" /etc/passwd
     else
         echo "Using default UID of $PUID"
     fi
@@ -27,29 +36,32 @@ if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
     if [ "$CURRENT_GID" != "$PGID" ]; then
         echo "Changing GID from $CURRENT_GID to $PGID"
         # OLD: same reason as above
-        # groupmod -g "$PGID" devuser
+        groupmod -g "$PGID" devuser
         # NEW:
-        sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PGID:/" /etc/group
+        # sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PGID:/" /etc/group
     else
         echo "Using default GID of $PGID"
     fi
     
-    echo "Updating ownership of $HOME_DIR"
-
-    # Update ownership of home directory and any other directories
-    # REMOVED. TOO SLOW.
-    # chown -R "$PUID":"$PGID" /home/devuser
-
     START_TIME=$(date +%s)
-
-    # New faster method:
-    # Selective chown: only operate on files that don't already match ownership.
-    find "$HOME_DIR" \( -not -uid "$PUID" -o -not -gid "$PGID" \) \
-    -exec chown "$PUID:$PGID" {} +
-
+    echo "Updating ownership of $HOME_DIR"
+    chown -R "$PUID":"$PGID" /home/devuser
+    echo "Updating ownership of PTK Admin Panel and PTK Help"
+    chown -R "$PUID":"$PGID" /ptk-admin-panel
+    chown -R "$PUID":"$PGID" /ptk-help
     END_TIME=$(date +%s)
     ELAPSED_SECONDS=$((END_TIME - START_TIME))
-    echo "Time elapsed for chown of home dir: ${ELAPSED_SECONDS}s"
+    echo "Time elapsed for ownership updates: ${ELAPSED_SECONDS}s"
+else
+    # If UID/GID was not changed, we still need to set correct ownership
+    # of the default config files.
+    #! TEST if still necessary
+    chown devuser:devuser /home/devuser/.bashrc
+    chown devuser:devuser /home/devuser/.bash_profile
+    chown devuser:devuser /home/devuser/.gitignore_global
+    chown devuser:devuser /home/devuser/.gitconfig
+    chown devuser:devuser /home/devuser/.tmux.conf
+    chown devuser:devuser /home/devuser/.justfile
 fi
 
 if [ -n "$PASSWORD" ]; then
@@ -74,9 +86,19 @@ else
 fi
 
 # Write code-server config as devuser
-su -s /bin/bash devuser -c "cat > /home/devuser/.config/code-server/config.yaml <<EOF
+su -s /bin/bash devuser -c "mkdir -p /home/devuser/.config/code-server && \
+cat > /home/devuser/.config/code-server/config.yaml <<EOF
 bind-addr: 0.0.0.0:5001
 auth: password
 password: $PASSWORD
 cert: false
 EOF"
+
+# Append any new runtime environment variables that are not already in /etc/environment
+# Skip HOME because we don't want root's home dir, also skip PASSWORD
+printenv | grep -v "^HOME=" | grep -v "^PASSWORD=" | while IFS= read -r line; do
+    key=$(echo "$line" | cut -d= -f1)
+    if ! grep -q "^${key}=" /etc/environment 2>/dev/null; then
+        echo "$line" >> /etc/environment
+    fi
+done

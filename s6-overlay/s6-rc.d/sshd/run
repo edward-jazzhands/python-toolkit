@@ -1,4 +1,4 @@
 #!/command/execlineb -P
+/usr/sbin/sshd -D -e
 
 # Note that SSH server must run as root
-/usr/sbin/sshd -D -e

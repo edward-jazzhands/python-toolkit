@@ -1,17 +1,21 @@
-####################################
-#~ PROGRAMMING TOOLKIT DOCKERFILE ~#
-####################################
+# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+# ┃ ▗▄▄▖ ▗▄▄▖  ▗▄▖  ▗▄▄▖▗▄▄▖  ▗▄▖ ▗▖  ▗▖▗▖  ▗▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖ ┃
+# ┃ ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌ ▐▌▐▌ ▐▌▐▛▚▞▜▌▐▛▚▞▜▌  █  ▐▛▚▖▐▌▐▌    ┃
+# ┃ ▐▛▀▘ ▐▛▀▚▖▐▌ ▐▌▐▌▝▜▌▐▛▀▚▖▐▛▀▜▌▐▌  ▐▌▐▌  ▐▌  █  ▐▌ ▝▜▌▐▌▝▜▌ ┃
+# ┃ ▐▌   ▐▌ ▐▌▝▚▄▞▘▝▚▄▞▘▐▌ ▐▌▐▌ ▐▌▐▌  ▐▌▐▌  ▐▌▗▄█▄▖▐▌  ▐▌▝▚▄▞▘ ┃
+# ┃                                                            ┃
+# ┃                     ▗▄▄▄▖▗▄▖  ▗▄▖ ▗▖   ▗▖ ▗▖▗▄▄▄▖▗▄▄▄▖     ┃
+# ┃                       █ ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌▗▞▘  █    █       ┃
+# ┃                       █ ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▛▚▖   █    █       ┃
+# ┃                       █ ▝▚▄▞▘▝▚▄▞▘▐▙▄▄▖▐▌ ▐▌▗▄█▄▖  █       ┃
+# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-# ███████████████████████████████
-# █                             █
-# █  ▄   ▘▜  ▌      ▄▖▗         █
-# █  ▙▘▌▌▌▐ ▛▌█▌▛▘  ▚ ▜▘▀▌▛▌█▌  █
-# █  ▙▘▙▌▌▐▖▙▌▙▖▌   ▄▌▐▖█▌▙▌▙▖  █
-# █                       ▄▌    █
-# █                             █
-# ███████████████████████████████
 
-# Use multi-stage build for downloading large archives
+#   ▄   ▘▜  ▌      ▄▖▗         
+#   ▙▘▌▌▌▐ ▛▌█▌▛▘  ▚ ▜▘▀▌▛▌█▌  
+#   ▙▘▙▌▌▐▖▙▌▙▖▌   ▄▌▐▖█▌▙▌▙▖  
+#                        ▄▌    
+
 FROM debian:bookworm-slim AS builder
 
 # Set non-interactive to avoid prompts
@@ -27,15 +31,10 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-
 ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-x86_64.tar.xz /tmp
 
 
-# ███████████████████████████████
-# █                             █
-# █   ▄▖         ▌  ▄▖▗         █
-# █   ▚ █▌▛▘▛▌▛▌▛▌  ▚ ▜▘▀▌▛▌█▌  █
-# █   ▄▌▙▖▙▖▙▌▌▌▙▌  ▄▌▐▖█▌▙▌▙▖  █
-# █                       ▄▌    █
-# █                             █
-# ███████████████████████████████
-
+#   ▄▖         ▌  ▄▖▗         
+#   ▚ █▌▛▘▛▌▛▌▛▌  ▚ ▜▘▀▌▛▌█▌  
+#   ▄▌▙▖▙▖▙▌▌▌▙▌  ▄▌▐▖█▌▙▌▙▖  
+#                       ▄▌    
 
 FROM debian:bookworm-slim
 
@@ -45,9 +44,12 @@ SHELL ["/bin/bash", "-c"]
 # Set non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 LABEL maintainer="ed.jazzhands@gmail.com"
-LABEL version="0.5.0"
-LABEL description="The Edward Jazzhands Programming Toolkit Container"
+LABEL version="0.6.0"
+LABEL description="The Programming Toolkit Container by Edward Jazzhands"
 
 LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/programming-toolkit"
 LABEL org.opencontainers.image.licenses="MIT"
@@ -71,31 +73,29 @@ WORKDIR /home/devuser
 #~   USER CONFIG    ~#
 ######################
 
-# Set default UID/GID as environment variables
-# 568 is the default for TrueNAS apps.
-ENV PUID=568 \
-    PGID=568
+# If building the image locally, you can pass in the UID/GID
+# of the user you want to create.
+# These can still be overridden by the environment variables
+# PUID and PGID on container run. But it may be more convenient
+# to set them here if building locally.
+ARG PUID=3001
+ARG PGID=3000
 
-# Here we copy the .bashrc file and other config files.
-# This is where you would add in your own config files.
-# NOTE: This dockerfile is designed so that essential configs
-# are not stored in any of these files. These are all
-# personal custom OS settings. I have my own favorite shell shortcuts
-# and functions, my tmux settings, my global Justfile, my own git settings, etc.
-#! Just ensure there's a .bash_profile file included!
-COPY /home-configs/ /home/devuser
+COPY /default-configs/ /default-configs
 
 # ptk-help is the container's custom help splash. It is configured to
 # show on login in the .bash_profile file and can be called with `ptk-help`
-COPY /ptk-help /home/devuser/ptk-help
+COPY /ptk-help /ptk-help
 
-RUN groupadd -g "$PGID" devuser && \
+RUN groupadd -g ${PGID} devuser && \
     # -m forces creation of a home directory  |  -u sets the UID
     # -g sets the group. Group must already exist (we created it above).
     # -s sets the user’s login shell
-    useradd -m -u "$PUID" -g devuser -s /bin/bash devuser && \
+    useradd -m -u ${PUID} -g devuser -s /bin/bash devuser && \
     # -R means recursive.
     chown -R devuser:devuser /home/devuser && \
+    chown -R devuser:devuser /ptk-help && \
+    chown -R devuser:devuser /default-configs && \
     # Add devuser to sudoers:
     echo 'devuser ALL=(root) ALL' >> /etc/sudoers
 
@@ -103,7 +103,7 @@ RUN groupadd -g "$PGID" devuser && \
 #~     SSH SETUP    ~#
 ######################
 
-COPY sshd_config /etc/ssh/sshd_config
+COPY /required-configs/sshd_config /etc/ssh/sshd_config
 
 RUN mkdir /run/sshd && \
     # SSH Server wants the following permissions and ownership
@@ -171,7 +171,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/* /usr/share/doc/* /usr/share/man/* /usr/share/locale/*
 
 # Copy from builder stage (avoids baking downloads into final layers)
-COPY --from=builder /usr/local/go /usr/local/go
+# NOTE: try changing Go dir to /opt/go
+COPY --from=builder /usr/local/go /usr/local/go/
 COPY --from=builder /tmp/s6-overlay-noarch.tar.xz /tmp/s6-overlay-noarch.tar.xz
 COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 
@@ -179,30 +180,33 @@ COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 # ~ Code-Server Setup ~ #
 #########################
 
-# Note that this must run as root
+#! NOTE: This MUST run as root
 RUN curl -fsSL https://code-server.dev/install.sh | sh && \
+    # I am not sure that it creates any folders in the devuser home dir
+    # when it installs. But it's here just in case.
     chown -R devuser:devuser /home/devuser
 
 # NOTE: The devuser/.config and devuser/.local/share/code-server folders
-# can be bind mounted to the host at runtime to persist data.
-# Other apps use the .config and .local/share folders so it is
-# important that the file ownership is set to devuser.
+# persist data between container runs when they are bind mounted to the host
+# (or if the entire home dir is bind mounted).
 
 ######################
 # ~ Homebrew Setup ~ #
 ######################
 
+ENV HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
+ENV HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar"
+ENV HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew"
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+ENV MANPATH="/home/linuxbrew/.linuxbrew/share/man${MANPATH+:$MANPATH}:"
+ENV INFOPATH="/home/linuxbrew/.linuxbrew/share/info:${INFOPATH:-}"
+
 # Create Homebrew directory with proper ownership
 RUN mkdir -p /home/linuxbrew && \
     chown -R devuser:devuser /home/linuxbrew
 
-RUN gosu devuser bash -c "NONINTERACTIVE=1 $(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && \
-    printf "# Homebrew setup\n" >> /home/devuser/.bash_ext && \
-    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/devuser/.bash_ext && \
-    printf "\n\n" >> /home/devuser/.bash_ext && \
-    chown devuser:devuser /home/devuser/.bash_ext
-
-ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+RUN gosu devuser bash -c "NONINTERACTIVE=1 $(curl -fsSL \
+    https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 RUN gosu devuser brew install cloc lazygit gopass && \
     gosu devuser brew cleanup -s --prune=0
@@ -211,79 +215,176 @@ RUN gosu devuser brew install cloc lazygit gopass && \
 # ~ UV / Python Setup ~ #
 #########################
 
-ARG PYTHON_VERSIONS="3.9 3.10 3.11 3.12 3.13"
+# UV by default uses hardlinks for cache and virtual environments.
+# But this is inside a container where the projects are bind mounted.
+# This means the UV cache folder will be on a different file system than
+# the projects themselves. So we want to tell it to copy files into each
+# venv instead of hardlinking. If this is not set, UV will do this
+# anyway (hardlink creation will not work and it will revert to copying),
+# but it will print a warning every single time, which is annoying
+# and may confuse some people.
+ENV UV_LINK_MODE=copy
 
-RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh' && \
-    gosu devuser bash -c 'export PATH="/home/devuser/.local/bin:${PATH}" && uv python install $PYTHON_VERSIONS'
+ENV UV_CACHE_DIR=/opt/uv/cache
 
-ENV PATH="/home/devuser/.local/bin:${PATH}"
+# The directory for storage of credentials when using a plain text backend.
+ENV UV_CREDENTIALS_DIR=/opt/uv/credentials
+
+# The directory in which to install uv using the standalone installer and
+# self update feature. Defaults to ~/.local/bin.
+ENV UV_INSTALL_DIR=/opt/uv/bin
+
+# Specifies the directory to place links to installed, managed Python executables.
+ENV UV_PYTHON_BIN_DIR=/opt/uv/python_bin
+
+# Specifies the directory for caching the archives of managed Python installations before installation.
+ENV UV_PYTHON_CACHE_DIR=/opt/uv/python_cache
+
+# Whether to install the Python executable into the ENV UV_PYTHON_BIN_DIR= directory.
+ENV UV_PYTHON_INSTALL_BIN=1
+
+# Specifies the directory for storing managed Python installations.
+ENV UV_PYTHON_INSTALL_DIR=/opt/uv/python_installs
+
+# Specifies the "bin" directory for installing tool executables.
+ENV UV_TOOL_BIN_DIR=/opt/uv/tool_bin
+
+# Specifies the directory where uv stores managed tools.
+ENV UV_TOOL_DIR=/opt/uv/tools
+
+# Specifies the directory where uv stores pyx credentials.
+ENV PYX_CREDENTIALS_DIR=/opt/uv/pyx_credentials
+
+# Equivalent to the --break-system-packages command-line argument. If set to true, uv will 
+# allow the installation of packages that conflict with system-installed packages.
+# WARNING: UV_BREAK_SYSTEM_PACKAGES=true is intended for use in continuous integration (CI) 
+# or containerized environments and should be used with caution, as modifying the system 
+# Python can lead to unexpected behavior.
+ENV UV_BREAK_SYSTEM_PACKAGES=1
+
+# Poertry by default creates virtual environments in its own cache location.
+# We want it to instead create .venv folders inside the project directory.
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
+ENV PATH="/opt/uv/bin:/opt/uv/tool_bin:${PATH}"
+
+RUN mkdir -p /opt/uv/{cache,credentials,bin,python_bin,python_cache,python_installs,tool_bin,tools,pyx_credentials} && \
+    chown -R devuser:devuser /opt/uv
+
+ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13 3.14"
+
+RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    uv python install $PYTHON_VERSIONS'
 
 # Python tools + project syncs + cleanup
-RUN gosu devuser uv tool install poetry && \
-    gosu devuser uv tool install nox && \
-    gosu devuser uv tool install rust-just && \
-    gosu devuser uv tool install rich-cli && \
-    gosu devuser uv tool install ducktools-pytui && \
-    gosu devuser uv tool install harlequin && \
-    gosu devuser uv tool install textual-dev && \
-    gosu devuser uv tool install cloctui && \
-    gosu devuser bash -c '(cd ~/ptk-help && uv sync)' && \
-    gosu devuser uv cache clean
+RUN gosu devuser bash -c 'uv tool install poetry && \
+    uv tool install nox && \
+    uv tool install rust-just && \
+    uv tool install rich-cli && \
+    uv tool install ducktools-pytui && \
+    uv tool install harlequin && \
+    uv tool install textual-dev && \
+    uv tool install cloctui && \
+    cd /ptk-help && uv sync && \
+    uv cache clean'
 
 #################
 #~  NODE / JS  ~#
 #################
 
-ENV NVM_DIR=/home/devuser/.nvm
-ENV NODE_VERSION=22
-ENV PNPM_HOME=/home/devuser/.local/share/pnpm
+# nvm's installation directory.
+ENV NVM_DIR=/opt/nvm
 
+# where node, npm, and global packages for the active version of node are installed.
+ENV NVM_BIN=/opt/nvm/versions/node/v$NODE_VERSION/bin
+
+# node's include file directory (useful for building C/C++ addons for node).
+ENV NVM_INC=/opt/nvm/versions/node/v$NODE_VERSION/include/node
+
+# pnpm's installation directory.
+ENV PNPM_HOME=/opt/pnpm
+
+ENV NODE_VERSION=22
+ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
+
+RUN mkdir -p /opt/nvm/versions/node/v$NODE_VERSION/bin && \
+    mkdir -p /opt/nvm/versions/node/v$NODE_VERSION/include/node && \
+    mkdir -p /opt/pnpm && \
+    chown -R devuser:devuser /opt/nvm && \
+    chown -R devuser:devuser /opt/pnpm
+
+# NVM
 RUN gosu devuser bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && \
     nvm install "$NODE_VERSION" && \
     nvm cache clear && \
-    npm cache clean --force && \
-    wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bash_ext" SHELL="$(which bash)" bash - && \
-    export PATH="$PNPM_HOME:$PATH" && \
-    pnpm store prune' && \
-    printf "\n\n" >> /home/devuser/.bash_ext
+    npm cache clean --force'
 
-ENV PATH="$PNPM_HOME:$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
+    # PNPM
+RUN gosu devuser bash -c 'wget -qO- https://get.pnpm.io/install.sh | bash - && \
+    pnpm store prune'
+
+RUN printf "\n\n" >> /etc/bash.bashrc && \
+    printf '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> /etc/bash.bashrc && \
+    printf '[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"' >> /etc/bash.bashrc
 
 ##########
 # Zoxide #
 ##########
 
-RUN gosu devuser bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh' && \
-    gosu devuser bash -c 'printf "%s\n" "eval \"\$(zoxide init bash)\"" >> ~/.bash_ext' && \
-    printf "\n\n" >> /home/devuser/.bash_ext
+RUN gosu devuser bash -c 'curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh'
+
+RUN printf "\n\n" >> /etc/bash.bashrc && \
+    printf 'eval "$(zoxide init bash)"' >> /etc/bash.bashrc
 
 ##########
 # Golang #
 ##########
 
-ENV PATH="/usr/local/go/bin:/home/devuser/go/bin:${PATH}"
+ENV PATH="/usr/local/go/bin:${PATH}"
+
+ENV GOCACHE="/opt/go/cache/go-build"
+ENV GOMODCACHE="/opt/go/cache/go-mod"
+ENV GOPATH="/opt/go"
+
+# NOTE: config folder should stay in home dir
+# ENV GOENV="/opt/go/config/go/env"
+# ENV GOTELEMETRYDIR="/opt/go/config/telemetry"
+
+# NOTE: not changing the default go install dir as of right now.
+# Try changing it to /opt/go/sdk in the future.
+ENV GOROOT="/usr/local/go"
+ENV GOTOOLDIR="/usr/local/go/pkg/tool/linux_amd64"
+
+RUN mkdir -p /opt/go/cache/go-build && \
+    mkdir -p /opt/go/cache/go-mod && \
+    mkdir -p /opt/go/config/go/env && \
+    mkdir -p /opt/go/config/telemetry && \
+    chown -R devuser:devuser /opt/go
 
 # Golang apps + optional mod cache cleanup (uncomment if mod cache not needed in image)
-RUN gosu devuser go install github.com/gopasspw/git-credential-gopass@latest
-RUN gosu devuser go clean -modcache
-
-# Write Go PATH to bash_ext
-RUN printf "export PATH=\"/usr/local/go/bin:/home/devuser/go/bin:\${PATH}\"" >> /home/devuser/.bash_ext && \
-    printf "\n\n" >> /home/devuser/.bash_ext
+RUN gosu devuser bash -c \
+    'go install github.com/gopasspw/git-credential-gopass@latest && \
+    go clean -modcache'
     
 
-#######
-# Git #
-#######
+###############
+# GNUPG / GCM #
+###############
 
-ENV GNUPGHOME=/home/devuser/.gnupg
+# This is because git credential manager expects a program called
+# 'libicu' to be available in the system to handle internationalization
+# (ie. characters from other languages).
+# This program is fairly large and is not needed at the moment.
+# This will make it ignore the error and continue running.
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+
+ENV GNUPGHOME=/opt/gnupg
 
 RUN mkdir -p "$GNUPGHOME" && \
     chown -R devuser:devuser "$GNUPGHOME" && \
-    chmod 700 "$GNUPGHOME" && \
-    gosu devuser git config --global core.excludesfile /home/devuser/.gitignore_global && \
-    gosu devuser git config --global credential.helper gopass
+    chmod 700 "$GNUPGHOME"
 
 ##############
 # S6-Overlay #
@@ -312,15 +413,29 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
 # This is at the end of the file because it's a git submodule, and it needs
 # to be improved without affecting the rest of the image. So we cache it last.
 
-COPY /ptk-admin-panel /home/devuser/ptk-admin-panel
+COPY /ptk-admin-panel /ptk-admin-panel
 
-RUN chown -R devuser:devuser /home/devuser/ptk-admin-panel && \
-    gosu devuser bash -c '(cd ~/ptk-admin-panel && uv sync)' && \
-    uv cache clean
+# NOTE: This possibly does not need to run as devuser. Experiment
+# with running this as root instead.
+RUN chown -R devuser:devuser /ptk-admin-panel && \
+    gosu devuser bash -c \
+    '(cd /ptk-admin-panel && uv sync && uv cache clean)'
 
 ###########
 # Cleanup #
 ###########
+
+# Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
+RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" | grep -v "^HOSTNAME=" > /etc/environment
+
+# This will configure PAM (Pluggable Authentication Modules) to allow reading environment
+# variables from the user's environment. This is necessary for SSH to preserve the PATH
+# variable and all other env vars created in the container.
+RUN sed -i '/pam_env.so # \[1\]/s/pam_env.so/pam_env.so readenv=1 user_readenv=1/' /etc/pam.d/sshd
+
+# Copy over the custom /etc/profile file
+COPY /required-configs/profile /etc/profile
+RUN chmod 644 /etc/profile
 
 ENV DEBIAN_FRONTEND=dialog
 
