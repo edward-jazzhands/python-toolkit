@@ -13,9 +13,9 @@ HOME_DIR="/home/devuser"
 SENTINEL_FILE="$HOME_DIR/.initialized"
 
 
-╔════════════╗
-║  Password  ║
-╚════════════╝
+# ╔════════════╗
+# ║  Password  ║
+# ╚════════════╝
 if [ -n "$PASSWORD" ]; then
     echo "devuser:$PASSWORD" | chpasswd
     echo "Password set from environment variable"
@@ -40,9 +40,9 @@ else
     echo "****************************************************"
 fi
 
-╔════════════════╗
-║  Copy Configs  ║
-╚════════════════╝
+# ╔════════════════╗
+# ║  Copy Configs  ║
+# ╚════════════════╝
 if [ ! -f "$SENTINEL_FILE" ]; then
     echo "--- First run: Performing initialization... ---"
 
@@ -63,9 +63,9 @@ else
     echo "--- Volume already initialized. Not copying configs ---"
 fi
 
-╔══════════════════╗
-║  Set User/Group  ║
-╚══════════════════╝
+# ╔══════════════════╗
+# ║  Set User/Group  ║
+# ╚══════════════════╝
 if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
 
     START_TIME=$(date +%s)
@@ -87,9 +87,9 @@ if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
     echo "Time elapsed for user/group mod: ${ELAPSED_SECONDS}s"
 fi
 
-╔════════════╗
-║  Env vars  ║
-╚════════════╝
+# ╔════════════╗
+# ║  Env vars  ║
+# ╚════════════╝
 # Append any new runtime environment variables that are not already in /etc/environment
 # Skip HOME because we don't want root's home dir, also skip PASSWORD
 printenv | grep -v "^HOME=" | grep -v "^PASSWORD=" | while IFS= read -r line; do
