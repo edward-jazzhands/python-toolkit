@@ -57,6 +57,7 @@ if [ ! -f "$SENTINEL_FILE" ]; then
         echo "code-server-config.yaml found in default configs."
     fi
 
+    mkdir -p "$HOME_DIR/.config/code-server"
     mv "$HOME_DIR/code-server-config.yaml" "$HOME_DIR/.config/code-server/config.yaml"
 
     printf $PASSWORD > "$HOME_DIR/.config/code-server/config.yaml"
