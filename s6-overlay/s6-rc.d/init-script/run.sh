@@ -48,16 +48,26 @@ if [ ! -f "$SENTINEL_FILE" ]; then
 
     # Copy default configs to home dir
     cp -r /default-configs/. $HOME_DIR
-    mv $HOME_DIR/code-server-config.yaml $HOME_DIR/.config/code-server/config.yaml
 
-    chown devuser:devuser $HOME_DIR/.bashrc
-    chown devuser:devuser $HOME_DIR/.bash_profile
-    chown devuser:devuser $HOME_DIR/.gitignore_global
-    chown devuser:devuser $HOME_DIR/.gitconfig
-    chown devuser:devuser $HOME_DIR/.tmux.conf
-    chown devuser:devuser $HOME_DIR/.justfile
-    chown devuser:devuser $HOME_DIR/.config/code-server/config.yaml
-    printf $PASSWORD > $HOME_DIR/.config/code-server/config.yaml
+
+    # check if code-server-config.yaml exists
+    if [ ! -f "$HOME_DIR/code-server-config.yaml" ]; then
+        echo "WARNING: code-server-config.yaml not found in default configs."
+    else
+        echo "code-server-config.yaml found in default configs."
+    fi
+
+    mv "$HOME_DIR/code-server-config.yaml" "$HOME_DIR/.config/code-server/config.yaml"
+
+    printf $PASSWORD > "$HOME_DIR/.config/code-server/config.yaml"
+
+    chown devuser:devuser "$HOME_DIR/.bashrc"
+    chown devuser:devuser "$HOME_DIR/.bash_profile"
+    chown devuser:devuser "$HOME_DIR/.gitignore_global"
+    chown devuser:devuser "$HOME_DIR/.gitconfig"
+    chown devuser:devuser "$HOME_DIR/.tmux.conf"
+    chown devuser:devuser "$HOME_DIR/.justfile"
+    chown devuser:devuser "$HOME_DIR/.config/code-server/config.yaml"
 
 else
     echo "--- Volume already initialized. Not copying configs ---"
