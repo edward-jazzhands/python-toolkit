@@ -1,0 +1,1 @@
+export PATH="$(cat "$PATH_FILE")"

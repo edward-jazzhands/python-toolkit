@@ -1,0 +1,14 @@
+# ~~ ATTENTION ~~
+
+This file is used to track whether the container has been initialized.
+Deleting, renaming, or moving this file will cause the container to be
+reinitialized, which will overwrite the following files with the defaults
+baked into the container (at /default-configs):
+
+~/.bashrc
+~/.bash_profile
+~/.gitignore_global
+~/.gitconfig
+~/.tmux.conf
+~/.justfile
+~/.config/code-server/config.yaml

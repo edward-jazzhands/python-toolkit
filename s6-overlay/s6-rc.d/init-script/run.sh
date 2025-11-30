@@ -10,60 +10,12 @@ PGID=${PGID:-3000}
 CURRENT_UID=$(id -u devuser)
 CURRENT_GID=$(id -g devuser)
 HOME_DIR="/home/devuser"
-
-# Copy default configs to home dir
-cp -r /default-configs/. /home/devuser
+SENTINEL_FILE="$HOME_DIR/.initialized"
 
 
-if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
-
-    if [ "$CURRENT_UID" != "$PUID" ]; then
-        echo "Changing UID from $CURRENT_UID to $PUID"
-        # OLD: This automatically activates a chown of the home dir and is slow
-
-
-        START_TIME=$(date +%s)
-        usermod -u "$PUID" devuser
-        END_TIME=$(date +%s)
-        ELAPSED_SECONDS=$((END_TIME - START_TIME))
-        echo "Time elapsed for user mod: ${ELAPSED_SECONDS}s"
-        # NEW: This is faster, but requires a manual chown of the home dir:
-        # sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PUID:/" /etc/passwd
-    else
-        echo "Using default UID of $PUID"
-    fi
-
-    if [ "$CURRENT_GID" != "$PGID" ]; then
-        echo "Changing GID from $CURRENT_GID to $PGID"
-        # OLD: same reason as above
-        groupmod -g "$PGID" devuser
-        # NEW:
-        # sed -i "s/^devuser:x:[0-9]*:/devuser:x:$PGID:/" /etc/group
-    else
-        echo "Using default GID of $PGID"
-    fi
-    
-    START_TIME=$(date +%s)
-    echo "Updating ownership of $HOME_DIR"
-    chown -R "$PUID":"$PGID" /home/devuser
-    echo "Updating ownership of PTK Admin Panel and PTK Help"
-    chown -R "$PUID":"$PGID" /ptk-admin-panel
-    chown -R "$PUID":"$PGID" /ptk-help
-    END_TIME=$(date +%s)
-    ELAPSED_SECONDS=$((END_TIME - START_TIME))
-    echo "Time elapsed for ownership updates: ${ELAPSED_SECONDS}s"
-else
-    # If UID/GID was not changed, we still need to set correct ownership
-    # of the default config files.
-    #! TEST if still necessary
-    chown devuser:devuser /home/devuser/.bashrc
-    chown devuser:devuser /home/devuser/.bash_profile
-    chown devuser:devuser /home/devuser/.gitignore_global
-    chown devuser:devuser /home/devuser/.gitconfig
-    chown devuser:devuser /home/devuser/.tmux.conf
-    chown devuser:devuser /home/devuser/.justfile
-fi
-
+╔════════════╗
+║  Password  ║
+╚════════════╝
 if [ -n "$PASSWORD" ]; then
     echo "devuser:$PASSWORD" | chpasswd
     echo "Password set from environment variable"
@@ -85,15 +37,60 @@ else
     echo "****************************************************"
 fi
 
-# Write code-server config as devuser
-su -s /bin/bash devuser -c "mkdir -p /home/devuser/.config/code-server && \
-cat > /home/devuser/.config/code-server/config.yaml <<EOF
-bind-addr: 0.0.0.0:5001
-auth: password
-password: $PASSWORD
-cert: false
-EOF"
+╔════════════════╗
+║  Copy Configs  ║
+╚════════════════╝
+if [ ! -f "$SENTINEL_FILE" ]; then
+    echo "--- First run: Performing initialization... ---"
 
+    # Copy default configs to home dir
+    cp -r /default-configs/. $HOME_DIR
+    mv $HOME_DIR/code-server-config.yaml $HOME_DIR/.config/code-server/config.yaml
+
+    chown devuser:devuser /home/devuser/.bashrc
+    chown devuser:devuser /home/devuser/.bash_profile
+    chown devuser:devuser /home/devuser/.gitignore_global
+    chown devuser:devuser /home/devuser/.gitconfig
+    chown devuser:devuser /home/devuser/.tmux.conf
+    chown devuser:devuser /home/devuser/.justfile
+    chown devuser:devuser /home/devuser/.config/code-server/config.yaml    
+else
+    echo "--- Volume already initialized. Not copying configs ---"
+fi
+
+╔══════════════════╗
+║  Set User/Group  ║
+╚══════════════════╝
+if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
+
+    if [ "$CURRENT_UID" != "$PUID" ]; then
+        echo "Changing UID from $CURRENT_UID to $PUID"
+
+        START_TIME=$(date +%s)
+        usermod -u "$PUID" devuser
+        END_TIME=$(date +%s)
+        ELAPSED_SECONDS=$((END_TIME - START_TIME))
+        echo "Time elapsed for user mod: ${ELAPSED_SECONDS}s"
+    else
+        echo "Using default UID of $PUID"
+    fi
+
+    if [ "$CURRENT_GID" != "$PGID" ]; then
+        echo "Changing GID from $CURRENT_GID to $PGID"
+        groupmod -g "$PGID" devuser
+    else
+        echo "Using default GID of $PGID"
+    fi
+    
+else
+    # If UID/GID was not changed, we still need to set correct ownership
+    # of the default config files.
+
+fi
+
+╔════════════╗
+║  Env vars  ║
+╚════════════╝
 # Append any new runtime environment variables that are not already in /etc/environment
 # Skip HOME because we don't want root's home dir, also skip PASSWORD
 printenv | grep -v "^HOME=" | grep -v "^PASSWORD=" | while IFS= read -r line; do
@@ -102,3 +99,4 @@ printenv | grep -v "^HOME=" | grep -v "^PASSWORD=" | while IFS= read -r line; do
         echo "$line" >> /etc/environment
     fi
 done
+
