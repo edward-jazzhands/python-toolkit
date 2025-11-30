@@ -21,5 +21,5 @@ fi
 
 # run ptk-help
 cd /usr/local/ptk-help
-uv run main.py
+uv run --frozen main.py
 cd ~
