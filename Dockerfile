@@ -384,7 +384,7 @@ COPY /default-configs/ /default-configs
 
 # ptk-help is the container's custom help splash. It is configured to
 # show on login in the .bash_profile file and can be called with `ptk-help`
-COPY /usr/local/ptk-help /usr/local/ptk-help
+COPY /ptk-help /usr/local/ptk-help
 
 RUN bash -c '(cd /usr/local/ptk-help && uv sync && uv cache clean)'
 
