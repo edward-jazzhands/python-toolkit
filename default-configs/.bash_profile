@@ -20,6 +20,6 @@ if [ -f "$HOME/.bashrc" ]; then
 fi
 
 # run ptk-help
-cd /ptk-help
+cd /usr/local/ptk-help
 uv run main.py
 cd ~
