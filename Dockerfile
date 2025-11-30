@@ -406,7 +406,7 @@ RUN bash -c '(cd /usr/local/ptk-admin-panel && uv sync && uv cache clean)'
 # Cleanup #
 ###########
 
-RUN chmod 755 /usr/local
+RUN chmod -R 755 /usr/local
 
 # Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
 RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" | grep -v "^HOSTNAME=" > /etc/environment
