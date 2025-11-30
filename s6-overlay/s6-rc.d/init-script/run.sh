@@ -60,7 +60,7 @@ if [ ! -f "$SENTINEL_FILE" ]; then
     mkdir -p "$HOME_DIR/.config/code-server"
     mv "$HOME_DIR/code-server-config.yaml" "$HOME_DIR/.config/code-server/config.yaml"
 
-    printf $PASSWORD > "$HOME_DIR/.config/code-server/config.yaml"
+    printf "password: $PASSWORD" > "$HOME_DIR/.config/code-server/config.yaml"
 
     chown devuser:devuser "$HOME_DIR/.bashrc"
     chown devuser:devuser "$HOME_DIR/.bash_profile"
