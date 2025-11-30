@@ -12,3 +12,6 @@ baked into the container (at /default-configs):
 ~/.tmux.conf
 ~/.justfile
 ~/.config/code-server/config.yaml
+
+The default Code-Server config file will use the password
+set in the PASSWORD environment variable when you run the container.

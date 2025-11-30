@@ -34,6 +34,9 @@ else
     echo "****************************************************"
     echo "* IMPORTANT: Save this password - it won't be shown again!"
     echo "This password is used for both SSH login (devuser) and for the code-server Web UI."
+    echo "Note that you can also modify the code-server config file to use a different password."
+    echo "If you have bind-mounted the container's home dir, you can modify the config file there."
+    echo "(~/.config/code-server/config.yaml)"
     echo "****************************************************"
 fi
 
@@ -47,13 +50,15 @@ if [ ! -f "$SENTINEL_FILE" ]; then
     cp -r /default-configs/. $HOME_DIR
     mv $HOME_DIR/code-server-config.yaml $HOME_DIR/.config/code-server/config.yaml
 
-    chown devuser:devuser /home/devuser/.bashrc
-    chown devuser:devuser /home/devuser/.bash_profile
-    chown devuser:devuser /home/devuser/.gitignore_global
-    chown devuser:devuser /home/devuser/.gitconfig
-    chown devuser:devuser /home/devuser/.tmux.conf
-    chown devuser:devuser /home/devuser/.justfile
-    chown devuser:devuser /home/devuser/.config/code-server/config.yaml    
+    chown devuser:devuser $HOME_DIR/.bashrc
+    chown devuser:devuser $HOME_DIR/.bash_profile
+    chown devuser:devuser $HOME_DIR/.gitignore_global
+    chown devuser:devuser $HOME_DIR/.gitconfig
+    chown devuser:devuser $HOME_DIR/.tmux.conf
+    chown devuser:devuser $HOME_DIR/.justfile
+    chown devuser:devuser $HOME_DIR/.config/code-server/config.yaml
+    printf $PASSWORD > $HOME_DIR/.config/code-server/config.yaml
+
 else
     echo "--- Volume already initialized. Not copying configs ---"
 fi
@@ -63,14 +68,10 @@ fi
 ╚══════════════════╝
 if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
 
+    START_TIME=$(date +%s)
     if [ "$CURRENT_UID" != "$PUID" ]; then
         echo "Changing UID from $CURRENT_UID to $PUID"
-
-        START_TIME=$(date +%s)
         usermod -u "$PUID" devuser
-        END_TIME=$(date +%s)
-        ELAPSED_SECONDS=$((END_TIME - START_TIME))
-        echo "Time elapsed for user mod: ${ELAPSED_SECONDS}s"
     else
         echo "Using default UID of $PUID"
     fi
@@ -81,11 +82,9 @@ if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
     else
         echo "Using default GID of $PGID"
     fi
-    
-else
-    # If UID/GID was not changed, we still need to set correct ownership
-    # of the default config files.
-
+    END_TIME=$(date +%s)
+    ELAPSED_SECONDS=$((END_TIME - START_TIME))
+    echo "Time elapsed for user/group mod: ${ELAPSED_SECONDS}s"
 fi
 
 ╔════════════╗
