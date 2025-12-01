@@ -1,1 +1,1 @@
-export PATH="$(cat "$PATH_FILE")"
+export PATH="$(cat /etc/environment.d/path)"
