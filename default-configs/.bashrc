@@ -38,7 +38,7 @@ alias activate="source .venv/bin/activate"
 
 # Run main launcher script for the python-toolkit
 tkhelp() {
-    (cd /usr/local/ptk-help && uv run --frozen main.py)
+    (cd /usr/local/ptk-help && uv run --no-project main.py)
 }
 
 # Prints a color gradient to test truecolor support

@@ -375,12 +375,9 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/code-server/run
 
-###################
-# Default Configs #
-###################
-
-# These can change fairly frequently, so it goes near the end of the file.
-COPY /default-configs/ /default-configs
+######################
+# PTK Help and Admin #
+######################
 
 # ptk-help is the container's custom help splash. It is configured to
 # show on login in the .bash_profile file and can be called with `ptk-help`
@@ -388,15 +385,11 @@ COPY /ptk-help /usr/local/ptk-help
 
 RUN bash -c '(cd /usr/local/ptk-help && uv sync && uv cache clean)'
 
-###################
-# PTK Admin Panel #
-###################
-
 # ptk-admin-panel is the container's admin panel. It is a web app built with
 # Flask and React. It is started with the container by S6-Overlay and served
 # on port 5000.
 # This is at the end of the file because it's a git submodule, and it needs
-# to be improved without affecting the rest of the image. So we cache it last.
+# to be improved without affecting the rest of the image.
 
 COPY /ptk-admin-panel /usr/local/ptk-admin-panel
 
@@ -406,7 +399,10 @@ RUN bash -c '(cd /usr/local/ptk-admin-panel && uv sync && uv cache clean)'
 # Cleanup #
 ###########
 
-RUN chmod -R 755 /usr/local
+# RUN chmod -R 755 /usr/local
+
+# These can change fairly frequently, so it goes near the end of the file.
+COPY /default-configs/ /default-configs
 
 # Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
 RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" | grep -v "^HOSTNAME=" > /etc/environment
