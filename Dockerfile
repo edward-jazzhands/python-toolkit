@@ -383,7 +383,13 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
 # show on login in the .bash_profile file and can be called with `ptk-help`
 COPY /ptk-help /usr/local/ptk-help
 
-RUN bash -c '(cd /usr/local/ptk-help && uv sync && uv cache clean)'
+# RUN bash -c '(cd /usr/local/ptk-help && uv sync && uv cache clean)'
+RUN cd /usr/local/ptk-help && \
+    uv sync --no-editable --locked && \
+    chmod -R a+rX . && \
+    find . -type d -name ".venv" -prune -o -type f -exec chmod 755 {} + && \
+    # Nukes ACLs; || true if no setfacl in base image
+    setfacl -b -R . || true  
 
 # ptk-admin-panel is the container's admin panel. It is a web app built with
 # Flask and React. It is started with the container by S6-Overlay and served
@@ -393,13 +399,22 @@ RUN bash -c '(cd /usr/local/ptk-help && uv sync && uv cache clean)'
 
 COPY /ptk-admin-panel /usr/local/ptk-admin-panel
 
-RUN bash -c '(cd /usr/local/ptk-admin-panel && uv sync && uv cache clean)'
+# RUN bash -c '(cd /usr/local/ptk-admin-panel && uv sync && uv cache clean)'
+RUN cd /usr/local/ptk-admin-panel && \
+uv sync --no-editable --locked && \
+    chmod -R a+rX . && \
+    find . -type d -name ".venv" -prune -o -type f -exec chmod 755 {} + && \
+    # Nukes ACLs; || true if no setfacl in base image
+    setfacl -b -R . || true  
 
 ###########
 # Cleanup #
 ###########
 
-# RUN chmod -R 755 /usr/local
+# Sync as root, then fix perms in the *same RUN* to keep layers clean/fast
+# RUN chmod -R a+rX /usr/local && \
+#     find . -type d -exec chmod 755 {} + && \
+#     setfacl -b -R . || true
 
 # These can change fairly frequently, so it goes near the end of the file.
 COPY /default-configs/ /default-configs
