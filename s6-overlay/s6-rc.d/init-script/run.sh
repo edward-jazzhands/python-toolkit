@@ -49,19 +49,15 @@ if [ ! -f "$SENTINEL_FILE" ]; then
     # Copy default configs to home dir
     cp -r /default-configs/. $HOME_DIR
 
-
-    # check if code-server-config.yaml exists
-    if [ ! -f "$HOME_DIR/code-server-config.yaml" ]; then
-        echo "WARNING: code-server-config.yaml not found in default configs."
-    else
-        echo "code-server-config.yaml found in default configs."
-        cat "$HOME_DIR/code-server-config.yaml"
-    fi
-
     mkdir -p "$HOME_DIR/.config/code-server"
     mv "$HOME_DIR/code-server-config.yaml" "$HOME_DIR/.config/code-server/config.yaml"
 
+    echo "code-server-config.yaml after moving:"
+    cat "$HOME_DIR/code-server-config.yaml"
+    
     printf "password: $PASSWORD" > "$HOME_DIR/.config/code-server/config.yaml"
+    echo "code-server-config.yaml after adding password:"
+    cat "$HOME_DIR/.config/code-server/config.yaml"
 
     chown devuser:devuser "$HOME_DIR/.bashrc"
     chown devuser:devuser "$HOME_DIR/.bash_profile"

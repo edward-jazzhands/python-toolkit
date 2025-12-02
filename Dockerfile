@@ -192,7 +192,7 @@ COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
 
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 
-# NOTE: The devuser/.config and devuser/.local/share/code-server folders
+# NOTE: The $HOME/.config and $HOME/.local/share/code-server folders
 # persist data between container runs when they are bind mounted to the host
 # (or if the entire home dir is bind mounted).
 
@@ -211,9 +211,12 @@ ENV INFOPATH="/home/linuxbrew/.linuxbrew/share/info:${INFOPATH:-}"
 RUN mkdir -p /home/linuxbrew && \
     chown -R devuser:devuser /home/linuxbrew
 
+# NOTE: Homebrew must be installed as a user. It does not permit root-level installs.
+# If you try to install Homebrew as root it just exits with an error.
 RUN gosu devuser bash -c "NONINTERACTIVE=1 $(curl -fsSL \
     https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
+# Likewise that means brew apps must also be installed as a user.
 RUN gosu devuser brew install cloc lazygit gopass zoxide && \
     gosu devuser brew cleanup -s --prune=0
 
