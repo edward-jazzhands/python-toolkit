@@ -3,8 +3,8 @@
 set -eu
 
 # Get UID/GID from environment variables
-PUID=${PUID:-3001}
-PGID=${PGID:-3000}
+PUID=${PUID:-1000}
+PGID=${PGID:-1000}
 
 # Only modify user/group if they differ from current values
 CURRENT_UID=$(id -u devuser)
@@ -55,6 +55,7 @@ if [ ! -f "$SENTINEL_FILE" ]; then
         echo "WARNING: code-server-config.yaml not found in default configs."
     else
         echo "code-server-config.yaml found in default configs."
+        cat "$HOME_DIR/code-server-config.yaml"
     fi
 
     mkdir -p "$HOME_DIR/.config/code-server"

@@ -78,8 +78,8 @@ WORKDIR /home/devuser
 # These can still be overridden by the environment variables
 # PUID and PGID on container run. But it may be more convenient
 # to set them here if building locally.
-ARG PUID=3001
-ARG PGID=3000
+ARG PUID=1000
+ARG PGID=1000
 
 RUN groupadd -g ${PGID} devuser && \
     # -m forces creation of a home directory  |  -u sets the UID
