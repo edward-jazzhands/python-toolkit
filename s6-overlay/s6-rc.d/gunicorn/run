@@ -1,4 +1,3 @@
 #!/command/execlineb -P
-s6-setuidgid devuser
 cd /usr/local/ptk-admin-panel
 /usr/local/bin/uv run --no-project gunicorn -w 2 -b 0.0.0.0:5000 src.ptk_admin_panel.app:app

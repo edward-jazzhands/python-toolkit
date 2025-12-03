@@ -48,9 +48,7 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
 LABEL maintainer="ed.jazzhands@gmail.com"
-LABEL version="0.6.0"
 LABEL description="The Programming Toolkit Container by Edward Jazzhands"
-
 LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/programming-toolkit"
 LABEL org.opencontainers.image.licenses="MIT"
 
@@ -88,8 +86,6 @@ RUN groupadd -g ${PGID} devuser && \
     useradd -m -u ${PUID} -g devuser -s /bin/bash devuser && \
     # -R means recursive.
     chown -R devuser:devuser /home/devuser && \
-    # chown -R devuser:devuser /ptk-help && \
-    # chown -R devuser:devuser /default-configs && \
     # Add devuser to sudoers:
     echo 'devuser ALL=(root) ALL' >> /etc/sudoers
 
@@ -126,6 +122,7 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 ENV GNUPGHOME="$HOME/.gnupg"
 
 RUN mkdir -p "$GNUPGHOME" && \
+    # GNUPG will complain if this folder is not set to 700:
     chmod 700 "$GNUPGHOME"
 
 ##############
@@ -208,6 +205,8 @@ ENV MANPATH="/home/linuxbrew/.linuxbrew/share/man${MANPATH+:$MANPATH}:"
 ENV INFOPATH="/home/linuxbrew/.linuxbrew/share/info:${INFOPATH:-}"
 
 # Create Homebrew directory with proper ownership
+#! NOTE: This is maybe not necessary since it installs as devuser anyway?
+# Test removing this and see if it breaks anything.
 RUN mkdir -p /home/linuxbrew && \
     chown -R devuser:devuser /home/linuxbrew
 
@@ -234,6 +233,7 @@ RUN gosu devuser brew install cloc lazygit gopass zoxide && \
 # and may confuse some people.
 ENV UV_LINK_MODE=copy
 
+# This is here for reference, but not used. This stays as the default.
 # ENV UV_CACHE_DIR=/usr/local/uv/cache
 
 # The directory in which to install uv using the standalone installer and
@@ -258,30 +258,13 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 # Specifies the directory where uv stores managed tools.
 ENV UV_TOOL_DIR=/usr/local/uv/tools
 
-# Specifies the directory where uv stores pyx credentials.
-# ENV PYX_CREDENTIALS_DIR=/usr/local/uv/pyx_credentials
-
-# The directory for storage of credentials when using a plain text backend.
-# ENV UV_CREDENTIALS_DIR=/usr/local/uv/credentials
-
-# Equivalent to the --break-system-packages command-line argument. If set to true, uv will 
-# allow the installation of packages that conflict with system-installed packages.
-# WARNING: UV_BREAK_SYSTEM_PACKAGES=true is intended for use in continuous integration (CI) 
-# or containerized environments and should be used with caution, as modifying the system 
-# Python can lead to unexpected behavior.
-ENV UV_BREAK_SYSTEM_PACKAGES=1
-
-# Poertry by default creates virtual environments in its own cache location.
+# Poetry by default creates virtual environments in its own cache location.
 # We want it to instead create .venv folders inside the project directory.
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
 RUN mkdir -p /usr/local/uv/{python_bin,python_cache,python_installs,tools}
-    # chown -R devuser:devuser /usr/local/uv
 
 ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13 3.14 3.14t"
-
-# RUN gosu devuser bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh && \
-#     uv python install $PYTHON_VERSIONS'
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     uv python install $PYTHON_VERSIONS
@@ -320,10 +303,9 @@ ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 RUN mkdir -p /usr/local/nvm/versions/node/v$NODE_VERSION/bin && \
     mkdir -p /usr/local/nvm/versions/node/v$NODE_VERSION/include/node && \
     mkdir -p /usr/local/pnpm
-    # chown -R devuser:devuser /usr/local/nvm && \
-    # chown -R devuser:devuser /usr/local/pnpm
 
-# NVM
+# NVM. NOTE: We need this to run as a self contained bash command here because
+# NVM requires its own bash init script to be sourced in order to work.
 RUN bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && \
     nvm install "$NODE_VERSION" && \
@@ -347,7 +329,7 @@ ENV GOTOOLDIR="/usr/local/go/pkg/tool/linux_amd64"
 
 ENV PATH="/usr/local/go/bin:/usr/local/go/pkg/tool/linux_amd64:${PATH}"
 
-# NOTE: config folder should stay in home dir
+# NOTE: config folder should stay in home dir. Here for reference.
 # ENV GOENV="/usr/local/go/config/go/env"
 # ENV GOTELEMETRYDIR="/usr/local/go/config/telemetry"
 
@@ -357,15 +339,17 @@ RUN mkdir -p /usr/local/go/cache/go-build && \
     mkdir -p /usr/local/go/config/telemetry
     # chown -R devuser:devuser /usr/local/go
 
-# Golang apps + optional mod cache cleanup (uncomment if mod cache not needed in image)
-RUN bash -c 'go install github.com/gopasspw/git-credential-gopass@latest && \
-    go clean -modcache'
+# Golang apps + mod cache cleanup
+RUN go install github.com/gopasspw/git-credential-gopass@latest && \
+    go clean -modcache
     
 
 ##############
 # S6-Overlay #
 ##############
 
+# NOTE: In s6-overlay, the folder structure itself IS the configuration.
+# You can't see that here since I just copy the entire folder structure.
 COPY /s6-overlay/s6-rc.d/ /etc/s6-overlay/s6-rc.d
 
 RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
@@ -414,36 +398,47 @@ uv sync --no-editable --locked && \
 # Cleanup #
 ###########
 
-# Sync as root, then fix perms in the *same RUN* to keep layers clean/fast
-# RUN chmod -R a+rX /usr/local && \
-#     find . -type d -exec chmod 755 {} + && \
-#     setfacl -b -R . || true
-
 # These can change fairly frequently, so it goes near the end of the file.
 COPY /default-configs/ /default-configs
 
-# Capture all ENV variables (excluding some problematic ones) and write to /etc/environment
-RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" | grep -v "^HOSTNAME=" > /etc/environment
+# profile.d scripts are a way to run commands on login. These are all
+# sourced automatically by /etc/profile (normal linux behavior).
+# Some tools (ie NVM) need to add some lines to a user's .bashrc file
+# when they're installed. But we want users to be able to delete the default .bashrc
+# and use their own if they desire. So these initializations are instead 
+# moved to /etc/profile.d where they will be sourced automatically by the system.
+COPY /required-configs/profile.d/* /etc/profile.d/
 
-# Capture PATH specifically to a read-only file
-RUN mkdir -p /etc/environment.d && \
+# Capture all ENV variables (excluding those we don't want) and write to /etc/environment
+RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" \
+    | grep -v "^HOSTNAME=" > /etc/environment && \
+    mkdir -p /etc/environment.d && \
+    # Capture PATH specifically:
     echo "$PATH" > /etc/environment.d/path && \
-    chmod 644 /etc/environment.d/path
+    # Set our PATH and profile.d files to be read-only:
+    chmod 644 /etc/environment.d/path && \
+    chmod 644 /etc/profile.d/*
 
 # This will configure PAM (Pluggable Authentication Modules) to allow reading environment
-# variables from the user's environment. This is necessary for SSH to preserve the PATH
-# variable and all other env vars created in the container.
-RUN sed -i '/pam_env.so # \[1\]/s/pam_env.so/pam_env.so readenv=1 user_readenv=1/' /etc/pam.d/sshd
+# variables from the user's environment. This is necessary for SSH to preserve all of
+# the env vars created during this image build.
+RUN sed -i '/pam_env.so # \[1\]/s/pam_env.so/pam_env.so readenv=1 user_readenv=1/' /etc/pam.d/sshd && \
+    # Change the secure path:
+    # The /etc/sudoers file is a list of users who are allowed to use sudo. By default,
+    # this file contains a line that says "Defaults secure_path =" followed by the default path.
+    # We want to substitute the default path with our own path.
+    # This way, sudo will have access to our PATH yet it will still be locked down.
+    sed -i "s|^Defaults.*secure_path.*|Defaults secure_path = $PATH|" /etc/sudoers && \
+    # Stop sudo from sanitizing environment variables. Sudo is designed to
+    # ignore environment variables by default (for security reasons). But
+    # since this is a single-user container, we need sudo to have access to them
+    # in order to work properly (otherwise things will get installed in the wrong place).
+    # Sudo automatically sources the /etc/sudoers.d/ directory when it runs (Added in Debian 11).
+    echo 'Defaults !env_reset' > /etc/sudoers.d/keep-env
 
-# Copy over the files in /required-configs/profile.d
-COPY /required-configs/profile.d/* /etc/profile.d/
-RUN chmod 644 /etc/profile.d/*
+# Current version of the container
+LABEL version="0.6.1"
 
-# Stop sudo from sanitizing environment variables
-RUN echo 'Defaults !env_reset' > /etc/sudoers.d/keep-env
-
-# Stop sudo from forcing a secure path (maintains PATH)
-RUN sed -i '/secure_path/d' /etc/sudoers
-
+# And finally turn the frontend back to dialog (interactive).
 ENV DEBIAN_FRONTEND=dialog
 

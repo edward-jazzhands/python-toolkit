@@ -57,13 +57,13 @@ if [ ! -f "$SENTINEL_FILE" ]; then
     cat "$HOME_DIR/.config/code-server/config.yaml"
     echo ""
 
-    chown devuser:devuser "$HOME_DIR/.bashrc"
-    chown devuser:devuser "$HOME_DIR/.bash_profile"
-    chown devuser:devuser "$HOME_DIR/.gitignore_global"
-    chown devuser:devuser "$HOME_DIR/.gitconfig"
-    chown devuser:devuser "$HOME_DIR/.tmux.conf"
-    chown devuser:devuser "$HOME_DIR/.justfile"
-    chown devuser:devuser "$HOME_DIR/.config/code-server/config.yaml"
+    # chown devuser:devuser "$HOME_DIR/.bashrc"
+    # chown devuser:devuser "$HOME_DIR/.bash_profile"
+    # chown devuser:devuser "$HOME_DIR/.gitignore_global"
+    # chown devuser:devuser "$HOME_DIR/.gitconfig"
+    # chown devuser:devuser "$HOME_DIR/.tmux.conf"
+    # chown devuser:devuser "$HOME_DIR/.justfile"
+    # chown devuser:devuser "$HOME_DIR/.config/code-server/config.yaml"
 
 else
     echo "--- Volume already initialized. Not copying configs ---"
@@ -72,26 +72,38 @@ fi
 # ╔══════════════════╗
 # ║  Set User/Group  ║
 # ╚══════════════════╝
-if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
+# if [ "$PUID" != "$CURRENT_UID" ] || [ "$PGID" != "$CURRENT_GID" ]; then
 
-    START_TIME=$(date +%s)
-    if [ "$CURRENT_UID" != "$PUID" ]; then
-        echo "Changing UID from $CURRENT_UID to $PUID"
-        usermod -u "$PUID" devuser
-    else
-        echo "Using default UID of $PUID"
-    fi
+#     START_TIME=$(date +%s)
+#     if [ "$CURRENT_UID" != "$PUID" ]; then
+#         echo "Changing UID from $CURRENT_UID to $PUID"
+#         usermod -u "$PUID" devuser
+#     else
+#         echo "Using default UID of $PUID"
+#     fi
 
-    if [ "$CURRENT_GID" != "$PGID" ]; then
-        echo "Changing GID from $CURRENT_GID to $PGID"
-        groupmod -g "$PGID" devuser
-    else
-        echo "Using default GID of $PGID"
-    fi
-    END_TIME=$(date +%s)
-    ELAPSED_SECONDS=$((END_TIME - START_TIME))
-    echo "Time elapsed for user/group mod: ${ELAPSED_SECONDS}s"
-fi
+#     if [ "$CURRENT_GID" != "$PGID" ]; then
+#         echo "Changing GID from $CURRENT_GID to $PGID"
+#         groupmod -g "$PGID" devuser
+#     else
+#         echo "Using default GID of $PGID"
+#     fi
+#     END_TIME=$(date +%s)
+#     ELAPSED_SECONDS=$((END_TIME - START_TIME))
+#     echo "Time elapsed for user/group mod: ${ELAPSED_SECONDS}s"
+# fi
+
+echo "Changing UID from $CURRENT_UID to $PUID"
+START_TIME=$(date +%s)
+
+usermod -u "$PUID" devuser
+echo "Changing GID from $CURRENT_GID to $PGID"
+groupmod -g "$PGID" devuser
+chown -R devuser:devuser /home/devuser
+
+END_TIME=$(date +%s)
+ELAPSED_SECONDS=$((END_TIME - START_TIME))
+echo "Time elapsed for user/group mod: ${ELAPSED_SECONDS}s"
 
 # ╔════════════╗
 # ║  Env vars  ║
