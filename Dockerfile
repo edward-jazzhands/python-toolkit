@@ -1,44 +1,39 @@
-# ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-# ┃ ▗▄▄▖ ▗▄▄▖  ▗▄▖  ▗▄▄▖▗▄▄▖  ▗▄▖ ▗▖  ▗▖▗▖  ▗▖▗▄▄▄▖▗▖  ▗▖ ▗▄▄▖ ┃
-# ┃ ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌ ▐▌▐▌ ▐▌▐▛▚▞▜▌▐▛▚▞▜▌  █  ▐▛▚▖▐▌▐▌    ┃
-# ┃ ▐▛▀▘ ▐▛▀▚▖▐▌ ▐▌▐▌▝▜▌▐▛▀▚▖▐▛▀▜▌▐▌  ▐▌▐▌  ▐▌  █  ▐▌ ▝▜▌▐▌▝▜▌ ┃
-# ┃ ▐▌   ▐▌ ▐▌▝▚▄▞▘▝▚▄▞▘▐▌ ▐▌▐▌ ▐▌▐▌  ▐▌▐▌  ▐▌▗▄█▄▖▐▌  ▐▌▝▚▄▞▘ ┃
-# ┃                                                            ┃
-# ┃                     ▗▄▄▄▖▗▄▖  ▗▄▖ ▗▖   ▗▖ ▗▖▗▄▄▄▖▗▄▄▄▖     ┃
-# ┃                       █ ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌▗▞▘  █    █       ┃
-# ┃                       █ ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▛▚▖   █    █       ┃
-# ┃                       █ ▝▚▄▞▘▝▚▄▞▘▐▙▄▄▖▐▌ ▐▌▗▄█▄▖  █       ┃
-# ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+# ░       ░░░        ░░  ░░░░  ░░░░░░░░       ░░░░      ░░░       ░░░░      ░░░        ░
+# ▒  ▒▒▒▒  ▒▒  ▒▒▒▒▒▒▒▒  ▒▒▒▒  ▒▒▒▒▒▒▒▒  ▒▒▒▒  ▒▒  ▒▒▒▒  ▒▒  ▒▒▒▒  ▒▒  ▒▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒
+# ▓  ▓▓▓▓  ▓▓      ▓▓▓▓▓  ▓▓  ▓▓▓▓▓▓▓▓▓       ▓▓▓  ▓▓▓▓  ▓▓       ▓▓▓  ▓▓▓   ▓▓      ▓▓▓
+# █  ████  ██  ██████████    ██████████  ████  ██        ██  ███  ███  ████  ██  ███████
+# █       ███        █████  ███████████       ███  ████  ██  ████  ███      ███        █
+                                                                                                                                   
+# Dockerfile responsibilities:
+
+#     Base OS + system packages
+#     Language runtimes (Python, Node, Go)
+#     Package managers (uv, npm, etc.) with configs pointing to $HOME
+#     CLI tools (tmux, fzf, zoxide, Oh My Zsh)
+#     Sane default dotfiles (copied on first run via init script)
+#     fixuid setup
+    
+# User responsibilities (via bind mount + scripts):
+    
+#     /home/coder bind mount for persistence
+#     Optional bootstrap.sh for their preferred global tools
+#     Code-Server extensions
+#     Personal config overrides
 
 
-#   ▄   ▘▜  ▌      ▄▖▗         
-#   ▙▘▌▌▌▐ ▛▌█▌▛▘  ▚ ▜▘▀▌▛▌█▌  
-#   ▙▘▙▌▌▐▖▙▌▙▖▌   ▄▌▐▖█▌▙▌▙▖  
-#                        ▄▌    
+# Start from the code-server Debian base image
+FROM codercom/code-server:latest
 
-FROM debian:bookworm-slim AS builder
+# Current version of the container
+LABEL version="0.6.1"
+LABEL maintainer="ed.jazzhands@gmail.com"
+LABEL description="Dev Barge Container by Edward Jazzhands"
+LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/dev-barge"
+LABEL org.opencontainers.image.licenses="MIT"
 
-# Set non-interactive to avoid prompts
-ENV DEBIAN_FRONTEND=noninteractive
+USER root
 
-# Download Go SDK
-RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && \
-    wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
-
-# Download S6-overlay
-ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-noarch.tar.xz /tmp
-ADD https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-x86_64.tar.xz /tmp
-
-
-#   ▄▖         ▌  ▄▖▗         
-#   ▚ █▌▛▘▛▌▛▌▛▌  ▚ ▜▘▀▌▛▌█▌  
-#   ▄▌▙▖▙▖▙▌▌▌▙▌  ▄▌▐▖█▌▙▌▙▖  
-#                       ▄▌    
-
-FROM debian:bookworm-slim
-
-# SHELL for bash features
+# SHELL for bash features during dockerfile build
 SHELL ["/bin/bash", "-c"]
 
 # Set non-interactive
@@ -47,96 +42,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-LABEL maintainer="ed.jazzhands@gmail.com"
-LABEL description="The Programming Toolkit Container by Edward Jazzhands"
-LABEL org.opencontainers.image.source="https://github.com/edward-jazzhands/programming-toolkit"
-LABEL org.opencontainers.image.licenses="MIT"
-
-# This does not actually enable the ports, it's only metadata for Docker.
-# Technically it's not even necessary for this to be here.
-EXPOSE 22 5000 5001 5002
-
-# Healthcheck will check whether S6-Overlay is running
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD pgrep s6-svscan || exit 1
-
-# The /init is set up by S6-Overlay. It will create this file
-ENTRYPOINT ["/init"]
-
-# WORKDIR sets the working directory for the container. Once set,
-# all RUN commands will be executed in this directory
-WORKDIR /home/devuser
-
-######################
-#~   USER CONFIG    ~#
-######################
-
-# If building the image locally, you can pass in the UID/GID
-# of the user you want to create.
-# These can still be overridden by the environment variables
-# PUID and PGID on container run. But it may be more convenient
-# to set them here if building locally.
-ARG PUID=1000
-ARG PGID=1000
-
-RUN groupadd -g ${PGID} devuser && \
-    # -m forces creation of a home directory  |  -u sets the UID
-    # -g sets the group. Group must already exist (we created it above).
-    # -s sets the user’s login shell
-    useradd -m -u ${PUID} -g devuser -s /bin/bash devuser && \
-    # -R means recursive.
-    chown -R devuser:devuser /home/devuser && \
-    # Add devuser to sudoers:
-    echo 'devuser ALL=(root) ALL' >> /etc/sudoers
-
-######################
-#~     SSH SETUP    ~#
-######################
-
-COPY /required-configs/sshd_config /etc/ssh/sshd_config
-
-RUN mkdir /run/sshd && \
-    # SSH Server wants the following permissions and ownership
-    # Owner has full, others have read/write:
-    chmod 755 /run/sshd && \
-    # Owner has full, others have no access:
-    chmod 700 /etc/ssh && \
-    # Owner can read/write, others have no access:
-    chmod 600 /etc/ssh/sshd_config && \
-    # Set owner to root for sshd_config and /run/sshd dir:
-    chown root:root /etc/ssh/sshd_config && \
-    chown -R root:root /run/sshd
-
-
-###############
-# GNUPG / GCM #
-###############
-
-# This is because git credential manager expects a program called
-# 'libicu' to be available in the system to handle internationalization
-# (ie. characters from other languages).
-# This program is fairly large and is not needed at the moment.
-# This will make it ignore the error and continue running.
-ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
-
-ENV GNUPGHOME="$HOME/.gnupg"
-
-RUN mkdir -p "$GNUPGHOME" && \
-    # GNUPG will complain if this folder is not set to 700:
-    chmod 700 "$GNUPGHOME"
-
-##############
-# Github CLI #
-##############
-
+# Github CLI (This must go before the gh install using apt-get, below)
 RUN mkdir -p -m 755 /etc/apt/keyrings && \
     wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null && \
     chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
 
-######################
-#~  APT APPS SETUP  ~#
-######################
+# These apt apps already included in base image:
+# curl \ dumb-init \ git \ git-lfs \ htop \ locales \ lsb-release \ 
+# man-db \ nano \ openssh-client \ procps \ sudo \ vim-tiny \ wget \ zsh \
+
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # --force-confdef = (Force configuration defaults)
@@ -144,28 +59,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # Together these two settings prevent any interactive prompts during package installation
     -o Dpkg::Options::="--force-confdef" \
     -o Dpkg::Options::="--force-confold" \
-    ca-certificates \
-    sudo \
-    wget \
-    curl \
-    tar \
-    git \
-    gosu \
+    # tar \
     make \
     bat \
-    openssh-server \
     tmux \
-    gnupg \
     ripgrep \
     fzf \
-    nano \
-    neovim \
-    btop \
+    # neovim \
     ncurses-term \
-    figlet \
-    toilet \
-    hugo \
     gh \
+    # gnupg \
+    # gosu \
+    ca-certificates \
     # libpng-dev is a library for PNG image support, 
     # commonly required by Python packages that work with images (ie. Pillow)
     libpng-dev \
@@ -179,45 +84,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /usr/share/doc/* /usr/share/man/* /usr/share/locale/*
 
-COPY --from=builder /usr/local/go /usr/local/go/
-COPY --from=builder /tmp/s6-overlay-noarch.tar.xz /tmp/s6-overlay-noarch.tar.xz
-COPY --from=builder /tmp/s6-overlay-x86_64.tar.xz /tmp/s6-overlay-x86_64.tar.xz
-
-#########################
-# ~ Code-Server Setup ~ #
-#########################
-
-RUN curl -fsSL https://code-server.dev/install.sh | sh
-
-# NOTE: The $HOME/.config and $HOME/.local/share/code-server folders
-# persist data between container runs when they are bind mounted to the host
-# (or if the entire home dir is bind mounted).
-
-######################
-# ~ Homebrew Setup ~ #
-######################
-
-ENV HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
-ENV HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar"
-ENV HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew"
-ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
-ENV MANPATH="/home/linuxbrew/.linuxbrew/share/man${MANPATH+:$MANPATH}:"
-ENV INFOPATH="/home/linuxbrew/.linuxbrew/share/info:${INFOPATH:-}"
-
-# Create Homebrew directory with proper ownership
-#! NOTE: This is maybe not necessary since it installs as devuser anyway?
-# Test removing this and see if it breaks anything.
-RUN mkdir -p /home/linuxbrew && \
-    chown -R devuser:devuser /home/linuxbrew
-
-# NOTE: Homebrew must be installed as a user. It does not permit root-level installs.
-# If you try to install Homebrew as root it just exits with an error.
-RUN gosu devuser bash -c "NONINTERACTIVE=1 $(curl -fsSL \
-    https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Likewise that means brew apps must also be installed as a user.
-RUN gosu devuser brew install cloc lazygit gopass zoxide && \
-    gosu devuser brew cleanup -s --prune=0
 
 #########################
 # ~ UV / Python Setup ~ #
@@ -231,7 +97,7 @@ RUN gosu devuser brew install cloc lazygit gopass zoxide && \
 # anyway (hardlink creation will not work and it will revert to copying),
 # but it will print a warning every single time, which is annoying
 # and may confuse some people.
-ENV UV_LINK_MODE=copy
+# ENV UV_LINK_MODE=copy
 
 # This is here for reference, but not used. This stays as the default.
 # ENV UV_CACHE_DIR=/usr/local/uv/cache
@@ -241,10 +107,10 @@ ENV UV_LINK_MODE=copy
 ENV UV_INSTALL_DIR=/usr/local/bin
 
 # Specifies the directory to place links to installed, managed Python executables.
-ENV UV_PYTHON_BIN_DIR=/usr/local/uv/python_bin
+ENV UV_PYTHON_BIN_DIR=/usr/local/bin
 
 # Specifies the directory for caching the archives of managed Python installations before installation.
-ENV UV_PYTHON_CACHE_DIR=/usr/local/uv/python_cache
+# ENV UV_PYTHON_CACHE_DIR=/usr/local/uv/python_cache
 
 # Whether to install the Python executable into the ENV UV_PYTHON_BIN_DIR= directory.
 ENV UV_PYTHON_INSTALL_BIN=1
@@ -253,36 +119,30 @@ ENV UV_PYTHON_INSTALL_BIN=1
 ENV UV_PYTHON_INSTALL_DIR=/usr/local/uv/python_installs
 
 # Specifies the "bin" directory for installing tool executables.
-ENV UV_TOOL_BIN_DIR=/usr/local/bin
+# ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
 # Specifies the directory where uv stores managed tools.
-ENV UV_TOOL_DIR=/usr/local/uv/tools
+# ENV UV_TOOL_DIR=/usr/local/uv/tools
 
 # Poetry by default creates virtual environments in its own cache location.
 # We want it to instead create .venv folders inside the project directory.
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
-RUN mkdir -p /usr/local/uv/{python_bin,python_cache,python_installs,tools}
+RUN mkdir -p /usr/local/uv/python_installs
 
-ARG PYTHON_VERSIONS="3.10 3.11 3.12 3.13 3.14 3.14t"
+ARG PYTHON_VERSIONS="3.10 3.14 3.14t"
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     uv python install $PYTHON_VERSIONS
 
-# Python tools + project syncs + cleanup
-RUN uv tool install poetry && \
-    uv tool install nox && \
-    uv tool install rust-just && \
-    uv tool install rich-cli && \
-    uv tool install ducktools-pytui && \
-    uv tool install harlequin && \
-    uv tool install textual-dev && \
-    uv tool install cloctui && \
-    uv cache clean
 
 #################
 #~  NODE / JS  ~#
 #################
+
+ENV NODE_VERSION=22
+ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 
 # nvm's installation directory.
 ENV NVM_DIR=/usr/local/nvm
@@ -295,10 +155,6 @@ ENV NVM_INC=/usr/local/nvm/versions/node/v$NODE_VERSION/include/node
 
 # pnpm's installation directory.
 ENV PNPM_HOME=/usr/local/pnpm
-
-ENV NODE_VERSION=22
-ENV PATH="$PNPM_HOME:$PATH"
-ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 
 RUN mkdir -p /usr/local/nvm/versions/node/v$NODE_VERSION/bin && \
     mkdir -p /usr/local/nvm/versions/node/v$NODE_VERSION/include/node && \
@@ -313,52 +169,55 @@ RUN bash -c 'curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/insta
     npm cache clean --force'
 
     # PNPM
-RUN wget -qO- https://get.pnpm.io/install.sh | bash - && \
-    pnpm store prune
+RUN wget -qO- https://get.pnpm.io/install.sh | bash
 
 
 ##########
 # Golang #
 ##########
 
-ENV GOCACHE="/usr/local/go/cache/go-build"
-ENV GOMODCACHE="/usr/local/go/cache/go-mod"
+# Download + install Go SDK
+RUN wget https://go.dev/dl/go1.25.0.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz && \
+    rm go1.25.0.linux-amd64.tar.gz
+
+# ENV GOCACHE="/usr/local/go/cache/go-build"
+# ENV GOMODCACHE="/usr/local/go/cache/go-mod"
 ENV GOPATH="/usr/local/go"
 ENV GOROOT="/usr/local/go"
-ENV GOTOOLDIR="/usr/local/go/pkg/tool/linux_amd64"
+# ENV GOTOOLDIR="/usr/local/go/pkg/tool/linux_amd64"
 
-ENV PATH="/usr/local/go/bin:/usr/local/go/pkg/tool/linux_amd64:${PATH}"
+ENV PATH="/usr/local/go/bin:/usr/local/go/pkg/tool/linux_amd64:$PATH"
 
 # NOTE: config folder should stay in home dir. Here for reference.
 # ENV GOENV="/usr/local/go/config/go/env"
 # ENV GOTELEMETRYDIR="/usr/local/go/config/telemetry"
 
-RUN mkdir -p /usr/local/go/cache/go-build && \
-    mkdir -p /usr/local/go/cache/go-mod && \
-    mkdir -p /usr/local/go/config/go/env && \
-    mkdir -p /usr/local/go/config/telemetry
+# RUN mkdir -p /usr/local/go/cache/go-build && \
+    # mkdir -p /usr/local/go/cache/go-mod && \
+    # mkdir -p /usr/local/go/config/go/env && \
+    # mkdir -p /usr/local/go/config/telemetry
     # chown -R devuser:devuser /usr/local/go
 
-# Golang apps + mod cache cleanup
-RUN go install github.com/gopasspw/git-credential-gopass@latest && \
-    go clean -modcache
     
-
 ##############
 # S6-Overlay #
 ##############
 
+# Download S6-overlay
+RUN wget -P /tmp https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-noarch.tar.xz && \
+    wget -P /tmp https://github.com/just-containers/s6-overlay/releases/download/v3.2.1.0/s6-overlay-x86_64.tar.xz && \
+    tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
+    tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz && \
+    rm /tmp/s6-overlay-*.tar.xz
+    
 # NOTE: In s6-overlay, the folder structure itself IS the configuration.
 # You can't see that here since I just copy the entire folder structure.
 COPY /s6-overlay/s6-rc.d/ /etc/s6-overlay/s6-rc.d
 
-RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && \
-    tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz && \
-    rm /tmp/s6-overlay*.tar.xz && \
-    # Remember to add new services here as well:
-    chmod +x /etc/s6-overlay/s6-rc.d/init-script/up && \
+# Remember to add new services here as well:
+RUN chmod +x /etc/s6-overlay/s6-rc.d/init-script/up && \
     chmod +x /etc/s6-overlay/s6-rc.d/init-script/run.sh && \
-    chmod +x /etc/s6-overlay/s6-rc.d/sshd/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/code-server/run
 
@@ -374,9 +233,9 @@ COPY /ptk-help /usr/local/ptk-help
 RUN cd /usr/local/ptk-help && \
     uv sync --no-editable --locked && \
     chmod -R a+rX . && \
-    find . -type d -name ".venv" -prune -o -type f -exec chmod 755 {} + && \
+    find . -type d -name ".venv" -prune -o -type f -exec chmod 775 {} +
     # Nukes ACLs; || true if no setfacl in base image
-    setfacl -b -R . || true  
+    # setfacl -b -R . || true  
 
 # ptk-admin-panel is the container's admin panel. It is a web app built with
 # Flask and React. It is started with the container by S6-Overlay and served
@@ -390,9 +249,9 @@ COPY /ptk-admin-panel /usr/local/ptk-admin-panel
 RUN cd /usr/local/ptk-admin-panel && \
 uv sync --no-editable --locked && \
     chmod -R a+rX . && \
-    find . -type d -name ".venv" -prune -o -type f -exec chmod 755 {} + && \
+    find . -type d -name ".venv" -prune -o -type f -exec chmod 775 {} +
     # Nukes ACLs; || true if no setfacl in base image
-    setfacl -b -R . || true  
+    # setfacl -b -R . || true  
 
 ###########
 # Cleanup #
@@ -403,42 +262,35 @@ COPY /default-configs/ /default-configs
 
 # profile.d scripts are a way to run commands on login. These are all
 # sourced automatically by /etc/profile (normal linux behavior).
-# Some tools (ie NVM) need to add some lines to a user's .bashrc file
-# when they're installed. But we want users to be able to delete the default .bashrc
+# Some tools (ie NVM) need to add some lines to a user's .profile/.bashrc/etc
+# when they're installed. But we want users to be able to delete the default .profile
 # and use their own if they desire. So these initializations are instead 
 # moved to /etc/profile.d where they will be sourced automatically by the system.
 COPY /required-configs/profile.d/* /etc/profile.d/
 
-# Capture all ENV variables (excluding those we don't want) and write to /etc/environment
-RUN env | grep -v "^HOME=" | grep -v "^PWD=" | grep -v "^SHLVL=" | grep -v "^_=" \
-    | grep -v "^HOSTNAME=" > /etc/environment && \
-    mkdir -p /etc/environment.d && \
-    # Capture PATH specifically:
-    echo "$PATH" > /etc/environment.d/path && \
-    # Set our PATH and profile.d files to be read-only:
-    chmod 644 /etc/environment.d/path && \
-    chmod 644 /etc/profile.d/*
+# Docker info
+EXPOSE 8080 8081 8082
 
-# This will configure PAM (Pluggable Authentication Modules) to allow reading environment
-# variables from the user's environment. This is necessary for SSH to preserve all of
-# the env vars created during this image build.
-RUN sed -i '/pam_env.so # \[1\]/s/pam_env.so/pam_env.so readenv=1 user_readenv=1/' /etc/pam.d/sshd && \
-    # Change the secure path:
-    # The /etc/sudoers file is a list of users who are allowed to use sudo. By default,
-    # this file contains a line that says "Defaults secure_path =" followed by the default path.
-    # We want to substitute the default path with our own path.
-    # This way, sudo will have access to our PATH yet it will still be locked down.
-    sed -i "s|^Defaults.*secure_path.*|Defaults secure_path = $PATH|" /etc/sudoers && \
-    # Stop sudo from sanitizing environment variables. Sudo is designed to
-    # ignore environment variables by default (for security reasons). But
-    # since this is a single-user container, we need sudo to have access to them
-    # in order to work properly (otherwise things will get installed in the wrong place).
-    # Sudo automatically sources the /etc/sudoers.d/ directory when it runs (Added in Debian 11).
-    echo 'Defaults !env_reset' > /etc/sudoers.d/keep-env
+# Port
+ENV PORT=8080
 
-# Current version of the container
-LABEL version="0.6.1"
+# (From Code-Server original - Entrypoint script is now run by s6-overlay)
+# Use our custom entrypoint script first
+# COPY deploy-container/entrypoint.sh /usr/bin/deploy-container-entrypoint.sh
+# ENTRYPOINT ["/usr/bin/deploy-container-entrypoint.sh"]
 
-# And finally turn the frontend back to dialog (interactive).
+# The /init is set up by S6-Overlay. It will create this file
+# This overrides the ENTRYPOINT set by the code-server base image
+ENTRYPOINT ["/init"]
+
+# Healthcheck will check whether S6-Overlay is running
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep s6-svscan || exit 1
+
+# Set back to dialog for root
+ENV DEBIAN_FRONTEND=dialog
+
+USER coder
+ENV SHELL=/bin/zsh
 ENV DEBIAN_FRONTEND=dialog
 
