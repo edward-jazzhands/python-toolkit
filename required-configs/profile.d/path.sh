@@ -1,1 +1,0 @@
-export PATH="$(cat /etc/environment.d/path)"

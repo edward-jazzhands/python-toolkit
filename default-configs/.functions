@@ -1,0 +1,93 @@
+welcome () {
+  echo " ______   _______  __   __    _______  _______  ______    _______  _______ "
+  echo "|      | |       ||  | |  |  |  _    ||   _   ||    _ |  |       ||       |"
+  echo "|  _    ||    ___||  |_|  |  | |_|   ||  |_|  ||   | ||  |    ___||    ___|"
+  echo "| | |   ||   |___ |       |  |       ||       ||   |_||_ |   | __ |   |___ "
+  echo "| |_|   ||    ___||       |  |  _   | |       ||    __  ||   ||  ||    ___|"
+  echo "|       ||   |___  |     |   | |_|   ||   _   ||   |  | ||   |_| ||   |___ "
+  echo "|______| |_______|  |___|    |_______||__| |__||___|  |_||_______||_______|"
+  echo "                                                     by Edward Jazzhands"
+}
+
+# Run main launcher script for the python-toolkit
+devhelp() {
+    (cd /usr/local/devhelp && uv run --no-project main.py)
+}
+
+# Prints a color gradient to test truecolor support
+colortest() {
+  awk 'BEGIN{
+      s=" "; s=s s s s s s s s;
+      for (colnum = 0; colnum<77; colnum++) {
+          r = 255-(colnum*255/76);
+          g = (colnum*510/76);
+          b = (colnum*255/76);
+          if (g>255) g = 510 - g;
+          printf "\033[48;2;%d;%d;%dm%s\033[0m", r,g,b,substr(s,colnum%8+1,1);
+      }
+      printf "\n";
+  }'
+}
+
+# Download entire website with wget
+wgetsite() {
+    if [ -z "$1" ]; then
+        echo "Usage: wgetsite <url>"
+        echo "Example: wgetsite https://example.com/docs/"
+        return 1
+    fi
+    wget -r -np -k -p -E "$1"
+    # -r = recursive
+    # -np = no parent
+    # -k = convert links to local files
+    # -p = page requisites (download images, css, js, etc.)
+    # -E = use .html extension
+}
+
+# FZF shell history
+fsh() {
+  eval "$(history | fzf | sed 's/ *[0-9]* *//')"
+}
+
+# Ripgrep search by file name
+rgf() {
+  rg --files --iglob "*$1*"
+}
+
+# ┌───────────────────────┐
+# │          Git          │
+# └───────────────────────┘
+
+git-upstream() {
+  git remote set-url origin "$1"
+}
+
+git-hardsync() {
+	git fetch upstream
+	git checkout main
+	git reset --hard upstream/main
+}
+
+prune-branches() {
+  # Capture pruned remote branches
+  pruned_branches=$(git fetch -p 2>&1 | grep '\[deleted\]' | sed -E 's/.*-> origin\///')
+
+  if [[ -z "$pruned_branches" ]]; then
+      echo "No pruned branches. Nothing to do."
+      exit 0
+  fi
+
+  echo "Remote branches pruned:"
+  echo "$pruned_branches"
+  echo
+
+  # Loop through each pruned branch
+  for pruned in $pruned_branches; do
+      if git show-ref --verify --quiet "refs/heads/$pruned"; then
+          read -p "Local branch '$pruned' matches a just-pruned remote. Delete? [y/N] " confirm
+          if [[ $confirm == [yY] ]]; then
+              git branch -D "$pruned"
+          fi
+      fi
+  done
+}

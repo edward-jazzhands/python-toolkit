@@ -65,7 +65,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tmux \
     ripgrep \
     fzf \
-    # neovim \
+    neovim \
     ncurses-term \
     gh \
     # gnupg \
@@ -217,23 +217,23 @@ COPY /s6-overlay/s6-rc.d/ /etc/s6-overlay/s6-rc.d
 
 # Remember to add new services here as well:
 RUN chmod +x /etc/s6-overlay/s6-rc.d/init-script/up && \
-    chmod +x /etc/s6-overlay/s6-rc.d/init-script/run.sh && \
+    chmod +x /etc/s6-overlay/s6-rc.d/init-script/init.sh && \
     chmod +x /etc/s6-overlay/s6-rc.d/gunicorn/run && \
     chmod +x /etc/s6-overlay/s6-rc.d/code-server/run
 
 ######################
-# PTK Help and Admin #
+# Dev-Help and Admin #
 ######################
 
-# ptk-help is the container's custom help splash. It is configured to
-# show on login in the .bash_profile file and can be called with `ptk-help`
-COPY /ptk-help /usr/local/ptk-help
+# devhelp is the container's custom help splash. It can be called with `devhelp`.
+COPY /devhelp /usr/local/devhelp
 
-# RUN bash -c '(cd /usr/local/ptk-help && uv sync && uv cache clean)'
-RUN cd /usr/local/ptk-help && \
+RUN cd /usr/local/devhelp && \
     uv sync --no-editable --locked && \
+    uv cache clean && \
     chmod -R a+rX . && \
     find . -type d -name ".venv" -prune -o -type f -exec chmod 775 {} +
+    
     # Nukes ACLs; || true if no setfacl in base image
     # setfacl -b -R . || true  
 
@@ -245,28 +245,25 @@ RUN cd /usr/local/ptk-help && \
 
 COPY /ptk-admin-panel /usr/local/ptk-admin-panel
 
-# RUN bash -c '(cd /usr/local/ptk-admin-panel && uv sync && uv cache clean)'
 RUN cd /usr/local/ptk-admin-panel && \
-uv sync --no-editable --locked && \
+    uv sync --no-editable --locked && \
+    uv cache clean && \
     chmod -R a+rX . && \
     find . -type d -name ".venv" -prune -o -type f -exec chmod 775 {} +
     # Nukes ACLs; || true if no setfacl in base image
     # setfacl -b -R . || true  
 
-###########
-# Cleanup #
-###########
+################
+# Finilization #
+################
 
 # These can change fairly frequently, so it goes near the end of the file.
 COPY /default-configs/ /default-configs
 
-# profile.d scripts are a way to run commands on login. These are all
-# sourced automatically by /etc/profile (normal linux behavior).
-# Some tools (ie NVM) need to add some lines to a user's .profile/.bashrc/etc
-# when they're installed. But we want users to be able to delete the default .profile
-# and use their own if they desire. So these initializations are instead 
-# moved to /etc/profile.d where they will be sourced automatically by the system.
-COPY /required-configs/profile.d/* /etc/profile.d/
+# Oh My Zsh installs as coder user
+# USER coder
+# RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh \
+#     | sh -s -- --unattended
 
 # Docker info
 EXPOSE 8080 8081 8082

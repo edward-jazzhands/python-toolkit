@@ -1,0 +1,18 @@
+# Lazy shortcuts
+alias cl="clear"
+alias pyactivate="source .venv/bin/activate"
+
+# only if current shell session is bash:
+if [ -n "$BASH_VERSION" ] || [ "$BASH" ]; then
+
+    # enable color support
+    if [ -x /usr/bin/dircolors ]; then
+        test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+        alias ls="ls -lFa --color=auto"
+        alias grep='grep --color=auto'
+        alias fgrep='fgrep --color=auto'
+        alias egrep='egrep --color=auto'
+    else
+        echo "WARNING: dircolors not found - you won't have color output.'"
+    fi
+fi

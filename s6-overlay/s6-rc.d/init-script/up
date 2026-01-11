@@ -1,3 +1,11 @@
 #!/command/execlineb -P
+
+# with-contenv is necessary to pass through all the environment variables
+# in the container into the init script. Otherwise it won't have access
+# to them by default.
 with-contenv
-/bin/bash /etc/s6-overlay/s6-rc.d/init-script/run.sh
+/bin/bash /etc/s6-overlay/s6-rc.d/init-script/init.sh
+
+# notice there is no changing user or dropping priveleges here -
+# Container is designed to utilize the --user and --group flags in Docker.
+# The init script runs as the container user, NOT root.

@@ -1,3 +1,6 @@
 #!/command/execlineb -P
-s6-setuidgid devuser
+
 /usr/bin/code-server
+
+# notice there is no changing user or dropping priveleges here -
+# Container is designed to utilize the --user and --group flags in Docker.

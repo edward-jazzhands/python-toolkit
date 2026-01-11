@@ -1,74 +1,71 @@
-#! ATTENTION
-# The .bash_profile file (or just regular .profile) must be present
-# in order for .bashrc to be sourced upon user login to bash sessions.
+# If not running interactively, don't do anything
+# NOTE: This safety check basically prevents programs and scripts from sourcing
+# this file since they shouldn't have any business sourcing it. It's a defensive
+# check to prevent bugs and recommended for this to always be present.
+# You may have seen other bashrc files that instead do something like:
+# [ -n "$PS1" ] - However, that is considered to be less robust
+# than the below method
+case $- in
+    *i*) ;;
+      *) return;;
+esac
 
-###################
-# Welcome Message #
-###################
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL=ignoreboth
 
-echo "Type 'tkhelp' (Tool-Kit Help) to view all available programs."
+# NOTE: The defaults for this are 500/500
+# For setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
 
-##################
-# Initialization #
-##################
+# This toggles if sessions should append to the session history file
+#shopt -s histappend
 
-# Sets my global git ignore preferences:
-git config --global core.excludesfile /home/devuser/.gitignore_global
+# Check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+# (This is mostly defensive, if this wasn't here then there's not a lot
+# of things affected. But doesn't hurt to have it.)
+shopt -s checkwinsize
 
-# Sets gopass as the default git credential helper:
-git config --global credential.helper gopass
+# Defensive check in case we're in some minimal environment that didn't set up the
+# bash competions already (Does nothing if it's already enabled in /etc/bash.bashrc
+# and /etc/profile sources /etc/bash.bashrc).
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
 
+# This sets the prompt to be color if we find color or 256 in TERM.
+if [[ $TERM == *"color"* ]] || [[ $TERM == *"256"* ]]; then
+    PS1="\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "
+else
+    PS1="\u@\h:\w\$ "
+fi
 
-############
-# THE REST #
-############
+# If this is an xterm set the title to user@host:dir
+# (This updates the terminal tab title)
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
 
-export mygithub="https://github.com/edward-jazzhands"
+dotfiles_list=(
+    ".exports"
+    ".functions"
+    ".aliases"
+    ".tools"
+)
 
-alias ls="ls -lFa --color=auto"
-alias bat="batcat"
-alias cl="clear"
-alias gcm="git-credential-manager"
-alias resource="source ~/.bashrc"
-alias bashrc="nano ~/.bashrc"
+for dotfile in "${dotfiles_list[@]}"; do
+    source "$HOME/$dotfile" && echo "✅ sourced $HOME/.$dotfile"
+done
 
-# Aliases for Python
-alias activate="source .venv/bin/activate"
-
-
-# Run main launcher script for the python-toolkit
-tkhelp() {
-    (cd /usr/local/ptk-help && uv run --no-project main.py)
-}
-
-# Prints a color gradient to test truecolor support
-colortest() {
-  awk 'BEGIN{
-      s=" "; s=s s s s s s s s;
-      for (colnum = 0; colnum<77; colnum++) {
-          r = 255-(colnum*255/76);
-          g = (colnum*510/76);
-          b = (colnum*255/76);
-          if (g>255) g = 510 - g;
-          printf "\033[48;2;%d;%d;%dm%s\033[0m", r,g,b,substr(s,colnum%8+1,1);
-      }
-      printf "\n";
-  }'
-}
-
-# fuzzy cd
-fcd() {
-  local dir
-  dir=$(find . -type d -not -path '*/\.*' | fzf) && cd "$dir"
-}
-
-# fuzzy shell history
-fsh() {
-  eval "$(history | fzf | sed 's/ *[0-9]* *//')"
-}
-
-# search by file name
-rgf() {
-  rg --files --iglob "*$1*"
-}
-
+welcome()
+echo "Type 'devhelp' to view all available CLI programs."
