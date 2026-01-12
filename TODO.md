@@ -7,6 +7,7 @@
 [X] Configure all tools to move their install and data folders outside of the home dir
 [X] Install Code-Server
 [X] Install PTK Admin Panel
+[-] Configure all tools to install as root into /usr/local
 [-] Turn PTK Admin Panel and PTK Help into built python packages
 [-] Make S6-Overlay mark container as unhealthy if it fails to start
 [-] Make init script check if default configs exist before copying (for bind mounts)

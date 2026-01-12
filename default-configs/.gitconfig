@@ -1,3 +1,7 @@
 [user]
-	name = Edward Jazzhands
-	email = ed.jazzhands@gmail.com
+	name = Your Name
+	email = your.email@company.com
+[init]
+	defaultBranch = main
+[core]
+	excludesfile = /home/coder/.gitignore_global

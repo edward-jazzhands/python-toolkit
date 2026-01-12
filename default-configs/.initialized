@@ -1,0 +1,20 @@
+# ~~ ATTENTION ~~ #
+
+This file is used to track whether the container has been initialized.
+Deleting, renaming, or moving this file will cause the container to be
+reinitialized, which will overwrite the following files with the defaults
+baked into the container (at /default-configs):
+
+~/.bashrc
+~/.zshrc
+~/.aliases
+~/.functions
+~/.exports
+~/.tools
+~/.gitignore_global
+~/.gitconfig
+~/.tmux.conf
+~/.config/code-server/config.yaml
+
+The default Code-Server config file will use the password
+set in the PASSWORD environment variable when you run the container.
